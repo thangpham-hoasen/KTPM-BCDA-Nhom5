@@ -1,0 +1,210 @@
+package vn.edu.hoasen.view;
+
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.validator.StringLengthValidator;
+import jakarta.annotation.PostConstruct;
+import vn.edu.hoasen.controller.StudentController;
+import vn.edu.hoasen.model.Student;
+import vn.edu.hoasen.service.MessageService;
+
+@Route(value = "", layout = MainLayout.class)
+@PageTitle("Students")
+public class StudentView extends VerticalLayout {
+    
+    private final StudentController studentController;
+    private final MessageService messageService;
+    
+    private Grid<Student> grid = new Grid<>(Student.class);
+    private TextField nameField;
+    private DatePicker birthDateField;
+    private TextField parentNameField;
+    private TextField parentPhoneField;
+    private TextField classNameField;
+    private TextField searchField;
+    private Student editingStudent;
+    private Button addButton;
+    private Button cancelButton;
+    private Binder<Student> binder;
+    
+    public StudentView(StudentController studentController, MessageService messageService) {
+        this.studentController = studentController;
+        this.messageService = messageService;
+    }
+    
+    @PostConstruct
+    public void init() {
+        initFields();
+        setupLayout();
+        refreshGrid();
+    }
+    
+    private void initFields() {
+        nameField = new TextField(messageService.getMessage("student.name"));
+        birthDateField = new DatePicker(messageService.getMessage("student.birthDate"));
+        parentNameField = new TextField(messageService.getMessage("student.parentName"));
+        parentPhoneField = new TextField(messageService.getMessage("student.parentPhone"));
+        classNameField = new TextField(messageService.getMessage("student.className"));
+        searchField = new TextField(messageService.getMessage("common.search"));
+        
+        java.util.Locale currentLocale = messageService.getCurrentLanguage().equals("vi") ? 
+            new java.util.Locale("vi", "VN") : java.util.Locale.ENGLISH;
+        birthDateField.setLocale(currentLocale);
+        
+        setupValidation();
+    }
+    
+    private void setupValidation() {
+        binder = new Binder<>(Student.class);
+        
+        binder.forField(nameField)
+            .withValidator(new StringLengthValidator(messageService.getMessage("validation.name.length"), 2, 50))
+            .bind(Student::getName, Student::setName);
+            
+        binder.forField(birthDateField)
+            .asRequired(messageService.getMessage("validation.required"))
+            .bind(Student::getBirthDate, Student::setBirthDate);
+            
+        binder.forField(parentNameField)
+            .withValidator(new StringLengthValidator(messageService.getMessage("validation.name.length"), 2, 50))
+            .bind(Student::getParentName, Student::setParentName);
+            
+        binder.forField(parentPhoneField)
+            .withValidator(phone -> phone.matches("^[0-9]{10,11}$"), messageService.getMessage("validation.phone.invalid"))
+            .bind(Student::getParentPhone, Student::setParentPhone);
+            
+        binder.forField(classNameField)
+            .asRequired(messageService.getMessage("validation.required"))
+            .bind(Student::getClassName, Student::setClassName);
+    }
+    
+    private void setupLayout() {
+        setSizeFull();
+        setPadding(true);
+        setSpacing(true);
+        
+        H1 title = new H1(messageService.getMessage("student.title"));
+        
+        searchField.setPlaceholder(messageService.getMessage("student.search"));
+        searchField.setWidth("300px");
+        Button searchButton = new Button(messageService.getMessage("common.search"), e -> searchStudents());
+        searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Button clearSearchButton = new Button(messageService.getMessage("common.showAll"), e -> refreshGrid());
+        
+        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton);
+        
+        FormLayout formLayout = new FormLayout();
+        formLayout.add(nameField, birthDateField, parentNameField, parentPhoneField, classNameField);
+        
+        addButton = new Button(messageService.getMessage("student.add"), e -> saveStudent());
+        cancelButton = new Button(messageService.getMessage("common.cancel"), e -> cancelEdit());
+        cancelButton.setVisible(false);
+        addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
+        
+        setupGrid();
+        
+        add(title, searchLayout, formLayout, buttonLayout, new Hr(), grid);
+    }
+    
+    private void setupGrid() {
+        grid.removeAllColumns();
+        
+        grid.addColumn(Student::getName).setHeader(messageService.getMessage("student.name"));
+        grid.addColumn(student -> student.getBirthDate() != null ? 
+            student.getBirthDate().format(messageService.getCurrentDateTimeFormatter()) : "")
+            .setHeader(messageService.getMessage("student.birthDate"));
+        grid.addColumn(Student::getParentName).setHeader(messageService.getMessage("student.parentName"));
+        grid.addColumn(Student::getParentPhone).setHeader(messageService.getMessage("student.parentPhone"));
+        grid.addColumn(Student::getClassName).setHeader(messageService.getMessage("student.className"));
+        
+        grid.addComponentColumn(student -> {
+            Button editButton = new Button(messageService.getMessage("common.edit"), e -> editStudent(student));
+            editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+            
+            Button deleteButton = new Button(messageService.getMessage("common.delete"), e -> deleteStudent(student));
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+            
+            return new HorizontalLayout(editButton, deleteButton);
+        }).setHeader(messageService.getMessage("student.actions"));
+    }
+    
+    private void saveStudent() {
+        try {
+            Student student = editingStudent != null ? editingStudent : new Student();
+            binder.writeBean(student);
+            
+            if (student.getBirthDate() != null) {
+                int ageInMonths = student.getAgeInMonths();
+                if (ageInMonths < 18 || ageInMonths > 60) {
+                    Notification.show(messageService.getMessage("validation.age.invalid"));
+                    return;
+                }
+            }
+            
+            if (editingStudent != null) {
+                studentController.updateStudent(student);
+            } else {
+                studentController.saveStudent(student);
+            }
+            clearForm();
+            refreshGrid();
+            Notification.show(messageService.getMessage("login.success"));
+        } catch (ValidationException e) {
+            Notification.show(messageService.getMessage("error.validation.failed"));
+        }
+    }
+    
+    private void editStudent(Student student) {
+        editingStudent = student;
+        binder.readBean(student);
+        addButton.setText(messageService.getMessage("common.save"));
+        cancelButton.setVisible(true);
+    }
+    
+    private void cancelEdit() {
+        editingStudent = null;
+        clearForm();
+        addButton.setText(messageService.getMessage("student.add"));
+        cancelButton.setVisible(false);
+    }
+    
+    private void deleteStudent(Student student) {
+        studentController.deleteStudent(student.getId());
+        refreshGrid();
+        Notification.show(messageService.getMessage("login.success"));
+    }
+    
+    private void searchStudents() {
+        grid.setItems(studentController.searchStudents(searchField.getValue()));
+    }
+    
+    private void refreshGrid() {
+        if (studentController != null) {
+            grid.setItems(studentController.getAllStudents());
+        }
+    }
+    
+    private void clearForm() {
+        nameField.clear();
+        birthDateField.clear();
+        parentNameField.clear();
+        parentPhoneField.clear();
+        classNameField.clear();
+        nameField.focus();
+    }
+}

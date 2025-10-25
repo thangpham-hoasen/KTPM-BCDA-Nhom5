@@ -1,0 +1,57 @@
+Test Class,Test Method,Description,Expected Result,Test Type
+StudentTest,getAgeInMonths_ShouldCalculateCorrectAge,Test age calculation in months,Returns correct age in months,Unit
+StudentTest,isEligibleForAdmission_WithValidAge_ShouldReturnTrue,Test eligibility with valid age (24 months),Returns true,Unit
+StudentTest,isEligibleForAdmission_WithTooYoung_ShouldReturnFalse,Test eligibility with too young age (15 months),Returns false,Unit
+StudentTest,isEligibleForAdmission_WithTooOld_ShouldReturnFalse,Test eligibility with too old age (65 months),Returns false,Unit
+StudentTest,suggestClass_ForMamAge_ShouldReturnMamClass,Test class suggestion for Mam age (24 months),Returns Lớp Mầm,Unit
+StudentTest,suggestClass_ForChoiAge_ShouldReturnChoiClass,Test class suggestion for Choi age (42 months),Returns Lớp Chồi,Unit
+StudentTest,suggestClass_ForLaAge_ShouldReturnLaClass,Test class suggestion for La age (54 months),Returns Lớp Lá,Unit
+StudentTest,suggestClass_WithIneligibleAge_ShouldThrowException,Test class suggestion with ineligible age,Throws IllegalArgumentException,Unit
+AttendanceTest,createAttendance_ShouldSetCorrectValues,Test attendance object creation,Sets all values correctly,Unit
+AttendanceTest,attendanceStatus_ShouldHaveCorrectDisplayNames,Test attendance status display names,Returns correct Vietnamese names,Unit
+ClassRoomTest,canAddStudent_WithEmptyClass_ShouldReturnTrue,Test adding student to empty class,Returns true,Unit
+ClassRoomTest,canAddStudent_WithFullClass_ShouldReturnFalse,Test adding student to full class (25 students),Returns false,Unit
+ClassRoomTest,getCurrentCapacity_ShouldReturnCorrectCount,Test current capacity calculation,Returns correct student count,Unit
+ClassRoomTest,getAvailableSlots_ShouldCalculateCorrectly,Test available slots calculation,Returns correct available slots,Unit
+ClassRoomTest,isFull_WithMaxCapacity_ShouldReturnTrue,Test full class detection,Returns true when at max capacity,Unit
+TeacherTest,createTeacher_WithAllFields_ShouldSetCorrectValues,Test teacher creation with all fields,Sets all values correctly,Unit
+TeacherTest,createTeacher_WithDefaultConstructor_ShouldHaveNullValues,Test teacher creation with default constructor,All values are null,Unit
+TeacherTest,settersAndGetters_ShouldWorkCorrectly,Test teacher setters and getters,All setters and getters work correctly,Unit
+StudentServiceTest,saveStudent_WithValidStudent_ShouldSave,Test saving valid student,Student is saved successfully,Unit
+StudentServiceTest,saveStudent_WithInvalidAge_ShouldThrowException,Test saving student with invalid age,Throws IllegalArgumentException,Unit
+StudentServiceTest,saveStudent_WithFullClass_ShouldThrowException,Test saving student to full class,Throws IllegalStateException,Unit
+StudentServiceTest,isClassFull_WithFullClass_ShouldReturnTrue,Test class full detection,Returns true for full class,Unit
+StudentServiceTest,getClassCapacity_ShouldReturnCorrectCount,Test class capacity calculation,Returns correct capacity count,Unit
+StudentServiceTest,suggestClassForStudent_ShouldReturnCorrectClass,Test class suggestion for student,Returns correct class suggestion,Unit
+StudentServiceTest,saveStudent_WithNullBirthDate_ShouldSave,Test saving student with null birth date,Student is saved without validation,Unit
+StudentServiceTest,saveStudent_WithNullClassName_ShouldSave,Test saving student with null class name,Student is saved without validation,Unit
+AttendanceServiceTest,markAttendance_ShouldSaveAttendance,Test marking attendance,Attendance is saved successfully,Unit
+AttendanceServiceTest,getWeeklyAttendance_ShouldReturnCorrectRange,Test weekly attendance retrieval,Returns attendance for correct date range,Unit
+AttendanceServiceTest,getAttendanceRate_ShouldCalculateCorrectly,Test attendance rate calculation,Returns correct attendance percentage,Unit
+AttendanceServiceTest,getAttendanceStatistics_ShouldReturnCorrectCounts,Test attendance statistics,Returns correct status counts,Unit
+AttendanceServiceTest,updateAttendance_ShouldCallRepository,Test updating attendance,Calls repository save method,Unit
+AttendanceServiceTest,getMonthlyAttendance_ShouldReturnCorrectRange,Test monthly attendance retrieval,Returns attendance for correct month range,Unit
+AttendanceControllerTest,markAttendance_ShouldCallService,Test marking attendance via controller,Calls service method correctly,Unit
+AttendanceControllerTest,getAttendanceByStudent_ShouldReturnAttendanceList,Test getting attendance by student,Returns correct attendance list,Unit
+AttendanceControllerTest,getWeeklyAttendance_ShouldCallService,Test weekly attendance via controller,Calls service method correctly,Unit
+AttendanceControllerTest,getMonthlyAttendance_ShouldCallService,Test monthly attendance via controller,Calls service method correctly,Unit
+AttendanceControllerTest,getAttendanceStatistics_ShouldReturnStatistics,Test attendance statistics via controller,Returns correct statistics,Unit
+AttendanceControllerTest,getAttendanceRate_ShouldReturnRate,Test attendance rate via controller,Returns correct rate,Unit
+AttendanceControllerTest,updateAttendance_ShouldCallService,Test updating attendance via controller,Calls service method correctly,Unit
+ClassRoomServiceTest,getAllClassRooms_ShouldReturnAllClassRooms,Test getting all classrooms,Returns all classroom records,Unit
+ClassRoomServiceTest,getClassRoomById_ShouldReturnClassRoom,Test getting classroom by ID,Returns correct classroom,Unit
+ClassRoomServiceTest,getClassCapacity_ShouldReturnCorrectCount,Test classroom capacity calculation,Returns correct student count,Unit
+ClassRoomServiceTest,isClassFull_WithFullClass_ShouldReturnTrue,Test full classroom detection,Returns true for full classroom,Unit
+ClassRoomServiceTest,canAddStudentToClass_WithAvailableSpace_ShouldReturnTrue,Test adding student to classroom with space,Returns true when space available,Unit
+MessageServiceTest,getMessage_WithKey_ShouldReturnMessage,Test message retrieval by key,Returns correct message,Unit
+MessageServiceTest,getMessage_WithKeyAndArgs_ShouldReturnFormattedMessage,Test message retrieval with arguments,Returns formatted message,Unit
+MessageServiceTest,getCurrentLanguage_WithoutSession_ShouldReturnDefault,Test default language retrieval,Returns default language (en),Unit
+TeacherControllerTest,getAllTeachers_ShouldReturnAllTeachers,Test getting all teachers,Returns all teacher records,Unit
+TeacherControllerTest,saveTeacher_ShouldCallService,Test saving teacher,Calls service method correctly,Unit
+TeacherControllerTest,deleteTeacher_ShouldCallService,Test deleting teacher,Calls service method correctly,Unit
+TeacherControllerTest,searchTeachers_WithEmptyTerm_ShouldReturnAllTeachers,Test teacher search with empty term,Returns all teachers,Unit
+TeacherControllerTest,searchTeachers_WithSearchTerm_ShouldReturnFilteredTeachers,Test teacher search with term,Returns filtered teachers,Unit
+CourseServiceTest,getAllCourses_ShouldReturnAllCourses,Test getting all courses,Returns all course records,Unit
+CourseServiceTest,saveCourse_ShouldReturnSavedCourse,Test saving course,Returns saved course,Unit
+CourseServiceTest,getStudentById_ShouldReturnStudent,Test getting course by ID,Returns correct course,Unit
+CourseServiceTest,deleteCourse_ShouldCallRepository,Test deleting course,Calls repository delete method,Unit

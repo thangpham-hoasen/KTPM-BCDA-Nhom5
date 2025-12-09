@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class StudentValidationTest extends BaseTest {
 
     @BeforeEach
-    void login() {
+    public void login() {
         page.navigate(BASE_URL + "/login");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         page.locator("vaadin-text-field input").first().fill("admin");

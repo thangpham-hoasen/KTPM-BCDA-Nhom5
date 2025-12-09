@@ -38,6 +38,8 @@ public class StudentView extends VerticalLayout {
     private Student editingStudent;
     private Button addButton;
     private Button cancelButton;
+    private Button newButton;
+    private VerticalLayout formSection;
     private Binder<Student> binder;
     
     public StudentView(StudentController studentController, MessageService messageService) {
@@ -54,11 +56,17 @@ public class StudentView extends VerticalLayout {
     
     private void initFields() {
         nameField = new TextField(messageService.getMessage("student.name"));
+        nameField.setId("name-field");
         birthDateField = new DatePicker(messageService.getMessage("student.birthDate"));
+        birthDateField.setId("birth-date-field");
         parentNameField = new TextField(messageService.getMessage("student.parentName"));
+        parentNameField.setId("parent-name-field");
         parentPhoneField = new TextField(messageService.getMessage("student.parentPhone"));
+        parentPhoneField.setId("parent-phone-field");
         classNameField = new TextField(messageService.getMessage("student.className"));
+        classNameField.setId("class-name-field");
         searchField = new TextField(messageService.getMessage("common.search"));
+        searchField.setId("search-field");
         
         java.util.Locale currentLocale = messageService.getCurrentLanguage().equals("vi") ? 
             new java.util.Locale("vi", "VN") : java.util.Locale.ENGLISH;
@@ -101,24 +109,36 @@ public class StudentView extends VerticalLayout {
         searchField.setPlaceholder(messageService.getMessage("student.search"));
         searchField.setWidth("300px");
         Button searchButton = new Button(messageService.getMessage("common.search"), e -> searchStudents());
+        searchButton.setId("search-button");
         searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button clearSearchButton = new Button(messageService.getMessage("common.showAll"), e -> refreshGrid());
+        clearSearchButton.setId("show-all-button");
         
-        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton);
+        newButton = new Button(messageService.getMessage("common.addNew"), e -> showForm());
+        newButton.setId("new-button");
+        newButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton, newButton);
+        searchLayout.setDefaultVerticalComponentAlignment(Alignment.END);
+        searchLayout.setWidthFull();
         
         FormLayout formLayout = new FormLayout();
         formLayout.add(nameField, birthDateField, parentNameField, parentPhoneField, classNameField);
         
         addButton = new Button(messageService.getMessage("student.add"), e -> saveStudent());
+        addButton.setId("add-button");
         cancelButton = new Button(messageService.getMessage("common.cancel"), e -> cancelEdit());
+        cancelButton.setId("cancel-button");
         cancelButton.setVisible(false);
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         
         HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
+        formSection = new VerticalLayout(formLayout, buttonLayout);
+        formSection.setVisible(false);
         
         setupGrid();
         
-        add(title, searchLayout, formLayout, buttonLayout, new Hr(), grid);
+        add(title, searchLayout, formSection, new Hr(), grid);
     }
     
     private void setupGrid() {
@@ -134,13 +154,17 @@ public class StudentView extends VerticalLayout {
         
         grid.addComponentColumn(student -> {
             Button editButton = new Button(messageService.getMessage("common.edit"), e -> editStudent(student));
+            editButton.setId("edit-button-" + student.getId());
             editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
             
             Button deleteButton = new Button(messageService.getMessage("common.delete"), e -> deleteStudent(student));
+            deleteButton.setId("delete-button-" + student.getId());
             deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             
             return new HorizontalLayout(editButton, deleteButton);
         }).setHeader(messageService.getMessage("student.actions"));
+        
+        grid.setId("student-grid");
     }
     
     private void saveStudent() {
@@ -161,26 +185,44 @@ public class StudentView extends VerticalLayout {
             } else {
                 studentController.saveStudent(student);
             }
-            clearForm();
             refreshGrid();
-            Notification.show(messageService.getMessage("login.success"));
+            hideForm();
+            addButton.setText(messageService.getMessage("student.add"));
+            cancelButton.setVisible(false);
+            editingStudent = null;
         } catch (ValidationException e) {
             Notification.show(messageService.getMessage("error.validation.failed"));
         }
     }
     
+    private void showForm() {
+        formSection.setVisible(true);
+        newButton.setVisible(false);
+        cancelButton.setVisible(true);
+        nameField.focus();
+    }
+    
+    private void hideForm() {
+        formSection.setVisible(false);
+        newButton.setVisible(true);
+        clearForm();
+    }
+    
     private void editStudent(Student student) {
         editingStudent = student;
         binder.readBean(student);
+        
+        formSection.setVisible(true);
+        newButton.setVisible(false);
         addButton.setText(messageService.getMessage("common.save"));
         cancelButton.setVisible(true);
     }
     
     private void cancelEdit() {
         editingStudent = null;
-        clearForm();
         addButton.setText(messageService.getMessage("student.add"));
         cancelButton.setVisible(false);
+        hideForm();
     }
     
     private void deleteStudent(Student student) {

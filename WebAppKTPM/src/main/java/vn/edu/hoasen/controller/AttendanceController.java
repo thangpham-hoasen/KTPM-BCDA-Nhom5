@@ -45,4 +45,8 @@ public class AttendanceController {
     public Attendance updateAttendance(Attendance attendance) {
         return attendanceService.updateAttendance(attendance);
     }
+
+    public List<Attendance> getAttendanceByDate(LocalDate date) {
+        return attendanceService.getAttendanceByDate(date);
+    }
 }

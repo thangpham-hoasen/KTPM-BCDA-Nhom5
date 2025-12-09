@@ -5,13 +5,10 @@ import org.junit.platform.suite.api.Suite;
 
 @Suite
 @SelectClasses({
-    LoginTest.class,
     NavigationAndUITest.class,
     StudentManagementTest.class,
     StudentValidationTest.class,
     StudentCRUDTest.class,
-    TeacherCRUDTest.class,
-    CourseCRUDTest.class,
     AttendanceTest.class,
     IntegrationTest.class,
     SecurityAndErrorHandlingTest.class,

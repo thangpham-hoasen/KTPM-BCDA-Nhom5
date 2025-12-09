@@ -42,6 +42,8 @@ public class TeacherView extends VerticalLayout {
     private Teacher editingTeacher;
     private Button addButton;
     private Button cancelButton;
+    private Button newButton;
+    private VerticalLayout formSection;
     private Binder<Teacher> binder;
     
     public TeacherView(TeacherController teacherController, MessageService messageService, ConfigurationButton configButton) {
@@ -59,11 +61,17 @@ public class TeacherView extends VerticalLayout {
     
     private void initFields() {
         nameField = new TextField(messageService.getMessage("teacher.name"));
+        nameField.setId("name-field");
         emailField = new EmailField(messageService.getMessage("teacher.email"));
+        emailField.setId("email-field");
         phoneField = new TextField(messageService.getMessage("teacher.phone"));
+        phoneField.setId("phone-field");
         subjectField = new TextField(messageService.getMessage("teacher.subject"));
+        subjectField.setId("subject-field");
         hireDateField = new DatePicker(messageService.getMessage("teacher.hireDate"));
+        hireDateField.setId("hire-date-field");
         searchField = new TextField(messageService.getMessage("common.search"));
+        searchField.setId("search-field");
         
         // Set locale for date picker
         java.util.Locale currentLocale = messageService.getCurrentLocale();
@@ -113,10 +121,16 @@ public class TeacherView extends VerticalLayout {
         searchField.setPlaceholder(messageService.getMessage("teacher.search"));
         searchField.setWidth("300px");
         Button searchButton = new Button(messageService.getMessage("common.search"), e -> searchTeachers());
+        searchButton.setId("search-button");
         searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button clearSearchButton = new Button(messageService.getMessage("common.showAll"), e -> refreshGrid());
+        clearSearchButton.setId("show-all-button");
         
-        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton);
+        newButton = new Button(messageService.getMessage("common.addNew"), e -> showForm());
+        newButton.setId("new-button");
+        newButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton, newButton);
         searchLayout.setAlignItems(Alignment.END);
         searchLayout.getStyle().set("margin-bottom", "20px");
         
@@ -129,18 +143,21 @@ public class TeacherView extends VerticalLayout {
         );
         
         addButton = new Button(messageService.getMessage("teacher.add"), e -> saveTeacher());
+        addButton.setId("add-button");
         cancelButton = new Button(messageService.getMessage("common.cancel"), e -> cancelEdit());
+        cancelButton.setId("cancel-button");
         cancelButton.setVisible(false);
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         addButton.getStyle().set("margin-top", "10px");
         
         HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
-        VerticalLayout formSection = new VerticalLayout(formLayout, buttonLayout);
+        formSection = new VerticalLayout(formLayout, buttonLayout);
         formSection.setSpacing(false);
         formSection.setPadding(true);
         formSection.getStyle().set("border", "1px solid var(--lumo-contrast-20pct)")
                               .set("border-radius", "var(--lumo-border-radius-m)")
                               .set("margin-bottom", "20px");
+        formSection.setVisible(false);
         
         setupGrid();
         
@@ -166,58 +183,72 @@ public class TeacherView extends VerticalLayout {
         
         grid.addComponentColumn(teacher -> {
             Button editButton = new Button(messageService.getMessage("common.edit"), e -> editTeacher(teacher));
+            editButton.setId("edit-button-" + teacher.getId());
             editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
             
             Button deleteButton = new Button(messageService.getMessage("common.delete"), e -> deleteTeacher(teacher));
+            deleteButton.setId("delete-button-" + teacher.getId());
             deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             
             return new HorizontalLayout(editButton, deleteButton);
         }).setHeader(messageService.getMessage("teacher.actions")).setWidth("150px");
-        
-        grid.setHeight("400px");
+
+        grid.setMinHeight("600px");
+        grid.setId("teacher-grid");
     }
     
     private void saveTeacher() {
-        try {
-            Teacher teacher = editingTeacher != null ? editingTeacher : new Teacher();
-            binder.writeBean(teacher);
-            
+        Teacher teacher = editingTeacher != null ? editingTeacher : new Teacher();
+        
+        if (binder.writeBeanIfValid(teacher)) {
             showConfirmDialog(
                 messageService.getMessage("confirm.save.title"),
                 messageService.getMessage("confirm.save.message"),
                 () -> {
-                    try {
-                        if (editingTeacher != null) {
-                            teacherController.updateTeacher(teacher);
-                        } else {
-                            teacherController.saveTeacher(teacher);
-                        }
-                        clearForm();
-                        refreshGrid();
-                        Notification.show(messageService.getMessage("login.success"), 2000, Notification.Position.MIDDLE);
-                    } catch (Exception e) {
-                        Notification.show(messageService.getMessage("error.save.failed") + ": " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+                    if (editingTeacher != null) {
+                        teacherController.updateTeacher(teacher);
+                    } else {
+                        teacherController.saveTeacher(teacher);
                     }
+                    refreshGrid();
+                    hideForm();
+                    addButton.setText(messageService.getMessage("teacher.add"));
+                    cancelButton.setVisible(false);
+                    editingTeacher = null;
                 }
             );
-        } catch (ValidationException e) {
-            Notification.show(messageService.getMessage("error.validation.failed"), 3000, Notification.Position.MIDDLE);
+        } else {
+            Notification.show(messageService.getMessage("validation.error"), 3000, Notification.Position.MIDDLE);
         }
+    }
+    
+    private void showForm() {
+        formSection.setVisible(true);
+        newButton.setVisible(false);
+        nameField.focus();
+    }
+    
+    private void hideForm() {
+        formSection.setVisible(false);
+        newButton.setVisible(true);
+        clearForm();
     }
     
     private void editTeacher(Teacher teacher) {
         editingTeacher = teacher;
         binder.readBean(teacher);
         
+        formSection.setVisible(true);
+        newButton.setVisible(false);
         addButton.setText(messageService.getMessage("common.save"));
         cancelButton.setVisible(true);
     }
     
     private void cancelEdit() {
         editingTeacher = null;
-        clearForm();
         addButton.setText(messageService.getMessage("teacher.add"));
         cancelButton.setVisible(false);
+        hideForm();
     }
     
     private void deleteTeacher(Teacher teacher) {
@@ -225,13 +256,8 @@ public class TeacherView extends VerticalLayout {
             messageService.getMessage("confirm.delete.title"),
             messageService.getMessage("confirm.delete.message"),
             () -> {
-                try {
-                    teacherController.deleteTeacher(teacher.getId());
-                    refreshGrid();
-                    Notification.show(messageService.getMessage("login.success"), 2000, Notification.Position.MIDDLE);
-                } catch (Exception e) {
-                    Notification.show(messageService.getMessage("error.delete.failed") + ": " + e.getMessage(), 5000, Notification.Position.MIDDLE);
-                }
+                teacherController.deleteTeacher(teacher.getId());
+                refreshGrid();
             }
         );
     }
@@ -248,9 +274,11 @@ public class TeacherView extends VerticalLayout {
             onConfirm.run();
             dialog.close();
         });
+        confirmButton.setId("confirm-yes-button");
         confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
         Button cancelButton = new Button(messageService.getMessage("confirm.no"), e -> dialog.close());
+        cancelButton.setId("confirm-no-button");
         
         dialog.getFooter().add(cancelButton, confirmButton);
         dialog.open();

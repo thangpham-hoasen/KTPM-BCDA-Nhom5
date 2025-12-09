@@ -32,7 +32,7 @@ public class CourseView extends VerticalLayout {
     private final MessageService messageService;
     private final ConfigurationButton configButton;
     
-    private Grid<Course> grid = new Grid<>(Course.class);
+    private Grid<Course> grid = new Grid<>(Course.class, false);
     private TextField nameField;
     private TextArea descriptionField;
     private TextField teacherNameField;
@@ -42,6 +42,8 @@ public class CourseView extends VerticalLayout {
     private Course editingCourse;
     private Button addButton;
     private Button cancelButton;
+    private Button newButton;
+    private VerticalLayout formSection;
     private Binder<Course> binder;
     
     public CourseView(CourseController courseController, MessageService messageService, ConfigurationButton configButton) {
@@ -59,11 +61,17 @@ public class CourseView extends VerticalLayout {
     
     private void initFields() {
         nameField = new TextField(messageService.getMessage("course.name"));
+        nameField.setId("name-field");
         descriptionField = new TextArea(messageService.getMessage("course.description"));
+        descriptionField.setId("description-field");
         teacherNameField = new TextField(messageService.getMessage("course.teacherName"));
+        teacherNameField.setId("teacher-name-field");
         durationField = new IntegerField(messageService.getMessage("course.duration"));
+        durationField.setId("duration-field");
         scheduleField = new TextField(messageService.getMessage("course.schedule"));
+        scheduleField.setId("schedule-field");
         searchField = new TextField(messageService.getMessage("common.search"));
+        searchField.setId("search-field");
         
         setupValidation();
     }
@@ -108,10 +116,16 @@ public class CourseView extends VerticalLayout {
         searchField.setPlaceholder(messageService.getMessage("course.search"));
         searchField.setWidth("300px");
         Button searchButton = new Button(messageService.getMessage("common.search"), e -> searchCourses());
+        searchButton.setId("search-button");
         searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button clearSearchButton = new Button(messageService.getMessage("common.showAll"), e -> refreshGrid());
+        clearSearchButton.setId("show-all-button");
         
-        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton);
+        newButton = new Button(messageService.getMessage("common.addNew"), e -> showForm());
+        newButton.setId("new-button");
+        newButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        HorizontalLayout searchLayout = new HorizontalLayout(searchField, searchButton, clearSearchButton, newButton);
         searchLayout.setAlignItems(Alignment.END);
         searchLayout.getStyle().set("margin-bottom", "20px");
         
@@ -124,18 +138,21 @@ public class CourseView extends VerticalLayout {
         );
         
         addButton = new Button(messageService.getMessage("course.add"), e -> saveCourse());
+        addButton.setId("add-button");
         cancelButton = new Button(messageService.getMessage("common.cancel"), e -> cancelEdit());
+        cancelButton.setId("cancel-button");
         cancelButton.setVisible(false);
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         addButton.getStyle().set("margin-top", "10px");
         
         HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
-        VerticalLayout formSection = new VerticalLayout(formLayout, buttonLayout);
+        formSection = new VerticalLayout(formLayout, buttonLayout);
         formSection.setSpacing(false);
         formSection.setPadding(true);
         formSection.getStyle().set("border", "1px solid var(--lumo-contrast-20pct)")
                               .set("border-radius", "var(--lumo-border-radius-m)")
                               .set("margin-bottom", "20px");
+        formSection.setVisible(false);
         
         setupGrid();
         
@@ -150,47 +167,66 @@ public class CourseView extends VerticalLayout {
     }
     
     private void setupGrid() {
-        grid.setColumns("name", "description", "teacherName", "duration", "schedule");
-        grid.getColumnByKey("name").setHeader(messageService.getMessage("course.name")).setWidth("150px");
-        grid.getColumnByKey("description").setHeader(messageService.getMessage("course.description")).setWidth("200px");
-        grid.getColumnByKey("teacherName").setHeader(messageService.getMessage("course.teacherName")).setWidth("120px");
-        grid.getColumnByKey("duration").setHeader(messageService.getMessage("course.duration")).setWidth("100px");
-        grid.getColumnByKey("schedule").setHeader(messageService.getMessage("course.schedule")).setWidth("120px");
+        grid.addColumn(Course::getName).setHeader(messageService.getMessage("course.name")).setKey("name").setWidth("150px");
+        grid.addColumn(Course::getDescription).setHeader(messageService.getMessage("course.description")).setKey("description").setWidth("200px");
+        grid.addColumn(Course::getTeacherName).setHeader(messageService.getMessage("course.teacherName")).setKey("teacherName").setWidth("120px");
+        grid.addColumn(Course::getDuration).setHeader(messageService.getMessage("course.duration")).setKey("duration").setWidth("100px");
+        grid.addColumn(Course::getSchedule).setHeader(messageService.getMessage("course.schedule")).setKey("schedule").setWidth("120px");
+        grid.addColumn(course -> course.getUpdatedAt() != null ? 
+            course.getUpdatedAt().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "")
+            .setHeader("Last Updated").setKey("updatedAt").setWidth("150px");
         
         grid.addComponentColumn(course -> {
             Button editButton = new Button(messageService.getMessage("common.edit"), e -> editCourse(course));
+            editButton.setId("edit-button-" + course.getId());
             editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
             
             Button deleteButton = new Button(messageService.getMessage("common.delete"), e -> deleteCourse(course));
+            deleteButton.setId("delete-button-" + course.getId());
             deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
             
             return new HorizontalLayout(editButton, deleteButton);
         }).setHeader(messageService.getMessage("course.actions")).setWidth("150px");
         
         grid.setHeight("400px");
+        grid.setId("course-grid");
     }
     
     private void saveCourse() {
-        showConfirmDialog(
-            messageService.getMessage("confirm.save.title"),
-            messageService.getMessage("confirm.save.message"),
-            () -> {
-                Course course = editingCourse != null ? editingCourse : new Course();
-                course.setName(nameField.getValue());
-                course.setDescription(descriptionField.getValue());
-                course.setTeacherName(teacherNameField.getValue());
-                course.setDuration(durationField.getValue());
-                course.setSchedule(scheduleField.getValue());
-                
-                if (editingCourse != null) {
-                    courseController.updateCourse(course);
-                } else {
-                    courseController.saveCourse(course);
+        Course course = editingCourse != null ? editingCourse : new Course();
+        
+        if (binder.writeBeanIfValid(course)) {
+            showConfirmDialog(
+                messageService.getMessage("confirm.save.title"),
+                messageService.getMessage("confirm.save.message"),
+                () -> {
+                    if (editingCourse != null) {
+                        courseController.updateCourse(course);
+                    } else {
+                        courseController.saveCourse(course);
+                    }
+                    refreshGrid();
+                    hideForm();
+                    addButton.setText(messageService.getMessage("course.add"));
+                    cancelButton.setVisible(false);
+                    editingCourse = null;
                 }
-                clearForm();
-                refreshGrid();
-            }
-        );
+            );
+        } else {
+            Notification.show(messageService.getMessage("validation.error"), 3000, Notification.Position.MIDDLE);
+        }
+    }
+    
+    private void showForm() {
+        formSection.setVisible(true);
+        newButton.setVisible(false);
+        nameField.focus();
+    }
+    
+    private void hideForm() {
+        formSection.setVisible(false);
+        newButton.setVisible(true);
+        clearForm();
     }
     
     private void editCourse(Course course) {
@@ -201,15 +237,17 @@ public class CourseView extends VerticalLayout {
         durationField.setValue(course.getDuration());
         scheduleField.setValue(course.getSchedule() != null ? course.getSchedule() : "");
         
+        formSection.setVisible(true);
+        newButton.setVisible(false);
         addButton.setText(messageService.getMessage("common.save"));
         cancelButton.setVisible(true);
     }
     
     private void cancelEdit() {
         editingCourse = null;
-        clearForm();
         addButton.setText(messageService.getMessage("course.add"));
         cancelButton.setVisible(false);
+        hideForm();
     }
     
     private void deleteCourse(Course course) {
@@ -235,9 +273,11 @@ public class CourseView extends VerticalLayout {
             onConfirm.run();
             dialog.close();
         });
+        confirmButton.setId("confirm-yes-button");
         confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
         Button cancelButton = new Button(messageService.getMessage("confirm.no"), e -> dialog.close());
+        cancelButton.setId("confirm-no-button");
         
         dialog.getFooter().add(cancelButton, confirmButton);
         dialog.open();
@@ -248,9 +288,7 @@ public class CourseView extends VerticalLayout {
     }
     
     private void refreshGrid() {
-        if (courseController != null) {
-            grid.setItems(courseController.getAllCourses());
-        }
+        grid.setItems(courseController.getAllCourses());
     }
     
     private void clearForm() {

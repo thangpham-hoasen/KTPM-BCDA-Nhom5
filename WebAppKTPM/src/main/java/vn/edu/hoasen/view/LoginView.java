@@ -52,14 +52,17 @@ public class LoginView extends VerticalLayout {
         title.getStyle().set("text-align", "center").set("margin-bottom", "30px");
 
         usernameField = new TextField(messageService.getMessage("login.username"));
+        usernameField.setId("username-field");
         usernameField.setWidth("100%");
         usernameField.setValue("admin"); // Default for demo
 
         passwordField = new PasswordField(messageService.getMessage("login.password"));
+        passwordField.setId("password-field");
         passwordField.setWidth("100%");
         passwordField.setValue("admin123"); // Default for demo
 
         loginButton = new Button(messageService.getMessage("login.submit"), e -> performLogin());
+        loginButton.setId("login-button");
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.setWidth("100%");
 

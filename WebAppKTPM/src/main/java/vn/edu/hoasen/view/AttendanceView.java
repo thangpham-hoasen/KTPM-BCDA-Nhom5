@@ -13,7 +13,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.RouterLink;
 import jakarta.annotation.PostConstruct;
 import vn.edu.hoasen.controller.AttendanceController;
 import vn.edu.hoasen.controller.StudentController;
@@ -43,6 +42,8 @@ public class AttendanceView extends VerticalLayout {
     private Attendance editingAttendance;
     private Button markButton;
     private Button cancelButton;
+    private Button newButton;
+    private VerticalLayout formSection;
     
     public AttendanceView(AttendanceController attendanceController, StudentController studentController,
                          MessageService messageService, ConfigurationButton configButton) {
@@ -57,15 +58,20 @@ public class AttendanceView extends VerticalLayout {
         initFields();
         setupLayout();
         setupFields();
-        refreshGrid();
+        showTodayAttendance();
     }
     
     private void initFields() {
         studentField = new ComboBox<>(messageService.getMessage("attendance.student"));
+        studentField.setId("student-field");
         dateField = new DatePicker(messageService.getMessage("attendance.date"));
+        dateField.setId("date-field");
         statusField = new ComboBox<>(messageService.getMessage("attendance.status"));
+        statusField.setId("status-field");
         notesField = new TextArea(messageService.getMessage("attendance.notes"));
+        notesField.setId("notes-field");
         weekStartField = new DatePicker(messageService.getMessage("attendance.weekStart"));
+        weekStartField.setId("week-start-field");
         
         // Set locale for date pickers
         java.util.Locale currentLocale = messageService.getCurrentLanguage().equals("vi") ? 
@@ -91,10 +97,16 @@ public class AttendanceView extends VerticalLayout {
         weekStartField.setPlaceholder(messageService.getMessage("attendance.weekStart"));
         weekStartField.setWidth("200px");
         Button weeklyReportButton = new Button(messageService.getMessage("attendance.weeklyReport"), e -> showWeeklyReport());
+        weeklyReportButton.setId("weekly-report-button");
         weeklyReportButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button todayButton = new Button(messageService.getMessage("attendance.todayAttendance"), e -> showTodayAttendance());
+        todayButton.setId("today-button");
         
-        HorizontalLayout reportLayout = new HorizontalLayout(weekStartField, weeklyReportButton, todayButton);
+        newButton = new Button(messageService.getMessage("common.addNew"), e -> showForm());
+        newButton.setId("new-button");
+        newButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        HorizontalLayout reportLayout = new HorizontalLayout(weekStartField, weeklyReportButton, todayButton, newButton);
         reportLayout.setAlignItems(Alignment.END);
         reportLayout.getStyle().set("margin-bottom", "20px");
         
@@ -107,18 +119,21 @@ public class AttendanceView extends VerticalLayout {
         );
         
         markButton = new Button(messageService.getMessage("attendance.mark"), e -> saveAttendance());
+        markButton.setId("mark-button");
         cancelButton = new Button(messageService.getMessage("common.cancel"), e -> cancelEdit());
+        cancelButton.setId("cancel-button");
         cancelButton.setVisible(false);
         markButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
         markButton.getStyle().set("margin-top", "10px");
         
         HorizontalLayout buttonLayout = new HorizontalLayout(markButton, cancelButton);
-        VerticalLayout formSection = new VerticalLayout(formLayout, buttonLayout);
+        formSection = new VerticalLayout(formLayout, buttonLayout);
         formSection.setSpacing(false);
         formSection.setPadding(true);
         formSection.getStyle().set("border", "1px solid var(--lumo-contrast-20pct)")
                               .set("border-radius", "var(--lumo-border-radius-m)")
                               .set("margin-bottom", "20px");
+        formSection.setVisible(false);
         
         setupGrid();
         
@@ -155,11 +170,68 @@ public class AttendanceView extends VerticalLayout {
         
         grid.addComponentColumn(attendance -> {
             Button editButton = new Button(messageService.getMessage("common.edit"), e -> editAttendance(attendance));
+            editButton.setId("edit-button-" + attendance.getId());
             editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
             return editButton;
         }).setHeader(messageService.getMessage("attendance.actions")).setWidth("100px");
         
-        grid.setHeight("400px");
+        grid.setMinHeight("600px");
+        grid.setId("attendance-grid");
+    }
+    
+    private void showTodayAttendance() {
+        List<Attendance> todayAttendance = attendanceController.getAttendanceByDate(LocalDate.now());
+        grid.setItems(todayAttendance);
+    }
+    
+    private void showWeeklyReport() {
+        if (weekStartField.getValue() != null) {
+            List<Attendance> weeklyAttendance = attendanceController.getWeeklyAttendance(weekStartField.getValue());
+            grid.setItems(weeklyAttendance);
+        }
+    }
+    
+    private void refreshGrid() {
+        showTodayAttendance();
+    }
+    
+    private void showForm() {
+        formSection.setVisible(true);
+        newButton.setVisible(false);
+        studentField.focus();
+    }
+    
+    private void hideForm() {
+        formSection.setVisible(false);
+        newButton.setVisible(true);
+        clearForm();
+    }
+    
+    private void editAttendance(Attendance attendance) {
+        editingAttendance = attendance;
+        studentField.setValue(attendance.getStudent());
+        dateField.setValue(attendance.getDate());
+        statusField.setValue(attendance.getStatus());
+        notesField.setValue(attendance.getNotes());
+        
+        formSection.setVisible(true);
+        newButton.setVisible(false);
+        markButton.setText(messageService.getMessage("common.save"));
+        cancelButton.setVisible(true);
+    }
+    
+    private void cancelEdit() {
+        hideForm();
+    }
+    
+    private void clearForm() {
+        editingAttendance = null;
+        studentField.clear();
+        dateField.setValue(LocalDate.now());
+        statusField.clear();
+        notesField.clear();
+        markButton.setText(messageService.getMessage("attendance.mark"));
+        cancelButton.setVisible(false);
     }
     
     private void saveAttendance() {
@@ -182,8 +254,8 @@ public class AttendanceView extends VerticalLayout {
                             notesField.getValue()
                         );
                     }
-                    clearForm();
                     refreshGrid();
+                    hideForm();
                 }
             );
         }
@@ -197,62 +269,17 @@ public class AttendanceView extends VerticalLayout {
         content.setText(message);
         dialog.add(content);
         
-        Button confirmButton = new Button(messageService.getMessage("confirm.yes"), e -> {
+        Button confirmButton = new Button(messageService.getMessage("common.yes"), e -> {
             onConfirm.run();
             dialog.close();
         });
+        confirmButton.setId("confirm-yes-button");
         confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
-        Button cancelButton = new Button(messageService.getMessage("confirm.no"), e -> dialog.close());
+        Button cancelButton = new Button(messageService.getMessage("common.no"), e -> dialog.close());
+        cancelButton.setId("confirm-no-button");
         
         dialog.getFooter().add(cancelButton, confirmButton);
         dialog.open();
-    }
-    
-    private void editAttendance(Attendance attendance) {
-        editingAttendance = attendance;
-        studentField.setValue(attendance.getStudent());
-        dateField.setValue(attendance.getDate());
-        statusField.setValue(attendance.getStatus());
-        notesField.setValue(attendance.getNotes() != null ? attendance.getNotes() : "");
-        
-        markButton.setText(messageService.getMessage("common.save"));
-        cancelButton.setVisible(true);
-    }
-    
-    private void cancelEdit() {
-        editingAttendance = null;
-        clearForm();
-        markButton.setText(messageService.getMessage("attendance.mark"));
-        cancelButton.setVisible(false);
-    }
-    
-    private void showWeeklyReport() {
-        if (weekStartField.getValue() != null) {
-            List<Attendance> weeklyAttendance = attendanceController.getWeeklyAttendance(weekStartField.getValue());
-            grid.setItems(weeklyAttendance);
-        }
-    }
-    
-    private void showTodayAttendance() {
-        List<Attendance> todayAttendance = attendanceController.getWeeklyAttendance(LocalDate.now());
-        grid.setItems(todayAttendance.stream()
-            .filter(a -> a.getDate().equals(LocalDate.now()))
-            .toList());
-    }
-    
-    private void refreshGrid() {
-        if (attendanceController != null) {
-            List<Attendance> allAttendance = attendanceController.getWeeklyAttendance(LocalDate.now().minusDays(7));
-            grid.setItems(allAttendance);
-        }
-    }
-    
-    private void clearForm() {
-        studentField.clear();
-        dateField.setValue(LocalDate.now());
-        statusField.clear();
-        notesField.clear();
-        studentField.focus();
     }
 }

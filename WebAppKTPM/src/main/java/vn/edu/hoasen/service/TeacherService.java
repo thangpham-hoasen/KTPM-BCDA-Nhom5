@@ -14,7 +14,7 @@ public class TeacherService {
     private TeacherRepository teacherRepository;
 
     public List<Teacher> getAllTeachers() {
-        return teacherRepository.findAll();
+        return teacherRepository.findAllByOrderByIdDesc();
     }
 
     public Optional<Teacher> getTeacherById(Long id) {

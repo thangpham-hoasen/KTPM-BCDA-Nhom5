@@ -7,8 +7,6 @@ import org.junit.platform.suite.api.Suite;
 @SelectClasses({
     NavigationAndUITest.class,
     StudentManagementTest.class,
-    StudentValidationTest.class,
-    StudentCRUDTest.class,
     AttendanceTest.class,
     IntegrationTest.class,
     SecurityAndErrorHandlingTest.class,

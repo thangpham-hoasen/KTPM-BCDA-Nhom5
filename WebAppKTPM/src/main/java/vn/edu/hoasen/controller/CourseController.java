@@ -13,7 +13,7 @@ public class CourseController {
     private CourseService courseService;
 
     public List<Course> getAllCourses() {
-        return courseService.getAllCourses();
+        return courseService.getAllCoursesOrderByCreatedAtDesc();
     }
 
     public void saveCourse(Course course) {

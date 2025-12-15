@@ -18,6 +18,10 @@ public class StudentService {
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
     }
+    
+    public List<Student> getAllStudentsOrderByCreatedAtDesc() {
+        return studentRepository.findAllByOrderByCreatedAtDesc();
+    }
 
     public Optional<Student> getStudentById(Long id) {
         return studentRepository.findById(id);

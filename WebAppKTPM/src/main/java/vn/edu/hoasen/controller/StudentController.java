@@ -13,7 +13,7 @@ public class StudentController {
     private StudentService studentService;
 
     public List<Student> getAllStudents() {
-        return studentService.getAllStudents();
+        return studentService.getAllStudentsOrderByCreatedAtDesc();
     }
 
     public void saveStudent(Student student) {

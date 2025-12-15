@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class NavigationAndUITest extends BaseTest {
+public class NavigationAndUITest extends BaseTest {
 
     @BeforeEach
     public void login() {
@@ -211,5 +211,38 @@ class NavigationAndUITest extends BaseTest {
         page.navigate(BASE_URL + "/");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.content().contains("Student Management"));
+    }
+
+
+    @Test
+    void testCompleteNavigation() {
+        // Start at Students page
+        page.navigate(BASE_URL);
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        assertTrue(page.content().contains("Students"));
+        
+        // Navigate to Courses
+        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
+        assertTrue(page.content().contains("Courses"));
+        
+        // Navigate to Teachers
+        page.click("vaadin-side-nav-item:has-text('👨🏫 Teachers')");
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
+        assertTrue(page.content().contains("Teachers"));
+        
+        // Navigate to Attendance
+        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
+        assertTrue(page.content().contains("Attendance"));
+        
+        // Navigate back to Students
+        page.click("vaadin-side-nav-item:has-text('👥 Students')");
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
+        assertTrue(page.content().contains("Students"));
     }
 }

@@ -16,6 +16,10 @@ public class CourseService {
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }
+    
+    public List<Course> getAllCoursesOrderByCreatedAtDesc() {
+        return courseRepository.findAllByOrderByCreatedAtDesc();
+    }
 
     public Optional<Course> getCourseById(Long id) {
         return courseRepository.findById(id);

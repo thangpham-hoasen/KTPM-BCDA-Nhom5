@@ -12,7 +12,6 @@ class TeacherManagementTest extends BaseTest {
         login();
         page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForTimeout(500);
     }
 
     @Test
@@ -25,16 +24,16 @@ class TeacherManagementTest extends BaseTest {
         page.locator("#phone-field input").fill("0123456789");
         page.locator("#subject-field input").fill("Mathematics");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("1/15/2024");
+        page.keyboard().press("Enter");
         
         page.click("#add-button");
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
         
         page.waitForTimeout(1000);
-        assertTrue(page.locator("#teacher-grid").isVisible());
+        assertTrue(page.locator("#teacher-grid").textContent().contains("John Doe"));
     }
 
     @Test
@@ -47,17 +46,17 @@ class TeacherManagementTest extends BaseTest {
         page.locator("#phone-field input").fill("0987654321");
         page.locator("#subject-field input").fill("Science");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("2/20/2024");
+        page.keyboard().press("Enter");
         
         page.click("#add-button");
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
         page.waitForTimeout(1000);
         
-        page.click("vaadin-button:has-text('Edit')");
-        page.waitForSelector("#cancel-button:visible");
+        page.locator("vaadin-button:has-text('Edit')").last().click();
+        page.waitForTimeout(500);
         
         page.locator("#name-field input").clear();
         page.locator("#name-field input").fill("Edited Teacher Name");
@@ -66,34 +65,39 @@ class TeacherManagementTest extends BaseTest {
         page.click("#confirm-yes-button");
         
         page.waitForTimeout(1000);
-        assertTrue(page.locator("#teacher-grid").isVisible());
+        assertTrue(page.locator("#teacher-grid").textContent().contains("Edited Teacher Name"));
     }
 
     @Test
     void testDeleteTeacher() {
+        String uniqueName = "DeleteTeacher_" + System.currentTimeMillis();
+        
         page.click("#new-button");
         page.waitForTimeout(300);
         
-        page.locator("#name-field input").fill("Delete Teacher");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#email-field input").fill("delete@example.com");
         page.locator("#phone-field input").fill("0111222333");
         page.locator("#subject-field input").fill("History");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("3/15/2024");
+        page.keyboard().press("Enter");
         
         page.click("#add-button");
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
         
-        page.click("vaadin-button:has-text('Delete')");
+        assertTrue(page.locator("#teacher-grid").textContent().contains(uniqueName));
+        
+        page.locator("vaadin-button:has-text('Delete')").last().click();
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
         
+        page.reload();
         page.waitForTimeout(1000);
-        assertTrue(page.locator("#teacher-grid").isVisible());
+        assertFalse(page.locator("#teacher-grid").textContent().contains(uniqueName));
     }
 
     @Test
@@ -106,28 +110,29 @@ class TeacherManagementTest extends BaseTest {
         page.locator("#phone-field input").fill("0444555666");
         page.locator("#subject-field input").fill("English");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("4/10/2024");
+        page.keyboard().press("Enter");
         
         page.click("#add-button");
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
         page.waitForTimeout(1000);
         
-        page.click("vaadin-button:has-text('Edit')");
-        page.waitForSelector("#cancel-button:visible");
+        page.locator("#teacher-grid vaadin-button:has-text('Edit')").last().click();
+        page.waitForTimeout(500);
         
         page.locator("#name-field input").fill("Should Not Save");
         page.click("#cancel-button");
-        
         page.waitForTimeout(500);
-        assertTrue(page.locator("#teacher-grid").isVisible());
+        
+        assertTrue(page.locator("#teacher-grid").textContent().contains("Cancel Teacher"));
+        assertFalse(page.locator("#teacher-grid").textContent().contains("Should Not Save"));
     }
 
     @Test
     void testSearchTeacher() {
-        String[] names = {"Search Teacher 1", "Search Teacher 2", "Different Name"};
+        String[] names = {"SearchTeacher 1", "SearchTeacher 2", "Different Name"};
         String[] emails = {"search1@example.com", "search2@example.com", "different@example.com"};
         
         for (int i = 0; i < names.length; i++) {
@@ -139,9 +144,9 @@ class TeacherManagementTest extends BaseTest {
             page.locator("#phone-field input").fill("012345678" + i);
             page.locator("#subject-field input").fill("Subject " + i);
             
-            page.locator("#hire-date-field").click();
-            page.waitForSelector("vaadin-date-picker-overlay");
-            page.click("vaadin-date-picker-overlay [part='today-button']");
+            page.locator("#hire-date-field input").click();
+            page.locator("#hire-date-field input").fill("5/" + (i + 1) + "/2024");
+            page.keyboard().press("Enter");
             
             page.click("#add-button");
             page.waitForSelector("vaadin-dialog-overlay");
@@ -149,11 +154,12 @@ class TeacherManagementTest extends BaseTest {
             page.waitForTimeout(500);
         }
         
-        page.locator("#search-field input").fill("Search Teacher");
+        page.locator("#search-field input").fill("SearchTeacher");
         page.click("#search-button");
-        
         page.waitForTimeout(1000);
-        assertTrue(page.locator("#teacher-grid").isVisible());
+        
+        String gridContent = page.locator("#teacher-grid").textContent();
+        assertTrue(gridContent.contains("SearchTeacher 1") || gridContent.contains("SearchTeacher 2"));
     }
 
     @Test
@@ -161,19 +167,19 @@ class TeacherManagementTest extends BaseTest {
         page.click("#new-button");
         page.waitForTimeout(300);
         
-        page.locator("#name-field input").fill("Show All Teacher");
+        page.locator("#name-field input").fill("ShowAll Teacher");
         page.locator("#email-field input").fill("showall@example.com");
         page.locator("#phone-field input").fill("0777888999");
         page.locator("#subject-field input").fill("Art");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("6/15/2024");
+        page.keyboard().press("Enter");
         
         page.click("#add-button");
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
-        page.waitForTimeout(500);
+        page.waitForTimeout(1000);
         
         page.locator("#search-field input").fill("NonExistent");
         page.click("#search-button");
@@ -182,7 +188,7 @@ class TeacherManagementTest extends BaseTest {
         page.click("#show-all-button");
         page.waitForTimeout(1000);
         
-        assertTrue(page.locator("#teacher-grid").isVisible());
+        assertTrue(page.locator("#teacher-grid").textContent().contains("ShowAll Teacher"));
     }
 
     @Test
@@ -195,14 +201,14 @@ class TeacherManagementTest extends BaseTest {
         page.locator("#phone-field input").fill("0123456789");
         page.locator("#subject-field input").fill("Math");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("7/20/2024");
+        page.keyboard().press("Enter");
         
         page.click("#add-button");
         page.waitForTimeout(1000);
         
-        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+        assertFalse(page.locator("#teacher-grid").textContent().contains("Invalid Email Teacher"));
     }
 
     @Test
@@ -215,9 +221,62 @@ class TeacherManagementTest extends BaseTest {
         page.locator("#phone-field input").fill("123");
         page.locator("#subject-field input").fill("Math");
         
-        page.locator("#hire-date-field").click();
-        page.waitForSelector("vaadin-date-picker-overlay");
-        page.click("vaadin-date-picker-overlay [part='today-button']");
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("8/25/2024");
+        page.keyboard().press("Enter");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        
+        assertFalse(page.locator("#teacher-grid").textContent().contains("Invalid Phone Teacher"));
+    }
+
+    @Test
+    void testNameTooShort() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("J");
+        page.locator("#email-field input").fill("short@example.com");
+        page.locator("#phone-field input").fill("0123456789");
+        page.locator("#subject-field input").fill("Math");
+        
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("9/10/2024");
+        page.keyboard().press("Enter");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        
+        // Should not show confirmation dialog due to validation error
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testNameTooLong() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        String longName = "A".repeat(51);
+        page.locator("#name-field input").fill(longName);
+        page.locator("#email-field input").fill("long@example.com");
+        page.locator("#phone-field input").fill("0123456789");
+        page.locator("#subject-field input").fill("Math");
+        
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("10/15/2024");
+        page.keyboard().press("Enter");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        
+        assertFalse(page.locator("#teacher-grid").textContent().contains(longName));
+    }
+
+    @Test
+    void testMissingRequiredFields() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
         
         page.click("#add-button");
         page.waitForTimeout(1000);

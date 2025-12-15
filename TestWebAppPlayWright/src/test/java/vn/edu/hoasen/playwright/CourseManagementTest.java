@@ -10,7 +10,7 @@ class CourseManagementTest extends BaseTest {
     @BeforeEach
     void loginAndNavigate() {
         login();
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         page.waitForTimeout(500);
     }
@@ -89,7 +89,7 @@ class CourseManagementTest extends BaseTest {
         page.click("#add-button");
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
-        page.waitForTimeout(1500);
+        page.waitForTimeout(2000);
         
         String beforeDelete = page.locator("#course-grid").textContent();
         assertTrue(beforeDelete.contains(uniqueName));
@@ -97,8 +97,11 @@ class CourseManagementTest extends BaseTest {
         page.locator("#course-grid vaadin-button:has-text('Delete')").last().click();
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
+
+        page.reload();
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForTimeout(1000);
         
-        page.waitForTimeout(2000);
         String afterDelete = page.locator("#course-grid").textContent();
         assertFalse(afterDelete.contains(uniqueName));
     }
@@ -198,5 +201,353 @@ class CourseManagementTest extends BaseTest {
         assertTrue(page.locator("#course-grid").isVisible());
         String allContent = page.locator("#course-grid").textContent();
         assertTrue(allContent.contains("UniqueShowAllCourse999"));
+    }
+
+    // Boundary Value Tests
+    @Test
+    void testCourseNameMinLength() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("AB");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").textContent().contains("AB"));
+    }
+
+    @Test
+    void testCourseNameTooShort() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("A");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testCourseNameMaxLength() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        String maxName = "A".repeat(100);
+        page.locator("#name-field input").fill(maxName);
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").isVisible());
+    }
+
+    @Test
+    void testCourseNameTooLong() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        String tooLongName = "A".repeat(101);
+        page.locator("#name-field input").fill(tooLongName);
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testDurationZero() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Zero Duration");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("0");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testDurationNegative() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Negative Duration");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("-5");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testDurationPositive() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Valid Duration");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("1");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+
+        page.reload();
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForTimeout(1000);
+
+        assertTrue(page.locator("#course-grid").textContent()
+                .contains("Valid Duration"));
+    }
+
+    // Required Field Tests
+    @Test
+    void testMissingCourseName() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testMissingTeacherName() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Course Name");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testMissingDuration() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Course Name");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testMissingSchedule() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Course Name");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    @Test
+    void testAllFieldsEmpty() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+    }
+
+    // Special Character Tests
+    @Test
+    void testCourseNameWithSpecialCharacters() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("C++ Programming & Design!");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").textContent().contains("C++ Programming & Design!"));
+    }
+
+    @Test
+    void testCourseNameWithUnicode() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Tiếng Việt 中文 日本語");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        
+        page.waitForTimeout(1000);
+        String gridContent = page.locator("#course-grid").textContent();
+        assertTrue(gridContent.contains("Tiếng Việt") || gridContent.contains("中文") || gridContent.contains("日本語"));
+    }
+
+    // Search Edge Cases
+    @Test
+    void testSearchEmptyString() {
+        page.locator("#search-field input").fill("");
+        page.click("#search-button");
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").isVisible());
+    }
+
+    @Test
+    void testSearchNonExistent() {
+        page.locator("#search-field input").fill("XYZ999NonExistent");
+        page.click("#search-button");
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").isVisible());
+    }
+
+    @Test
+    void testSearchCaseSensitivity() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("CaseSensitive");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        page.waitForTimeout(1000);
+        
+        page.locator("#search-field input").fill("casesensitive");
+        page.click("#search-button");
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").isVisible());
+    }
+
+    // Cancel Dialog Tests
+    @Test
+    void testCancelDeleteDialog() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Cancel Delete Test");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        page.waitForTimeout(1000);
+        
+        page.locator("#course-grid vaadin-button:has-text('Delete')").last().click();
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-no-button");
+        
+        page.waitForTimeout(500);
+        assertTrue(page.locator("#course-grid").textContent().contains("Cancel Delete Test"));
+    }
+
+    @Test
+    void testCancelSaveDialog() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Cancel Save Test");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-no-button");
+        
+        page.waitForTimeout(500);
+        String gridContent = page.locator("#course-grid").textContent();
+        assertFalse(gridContent.contains("Cancel Save Test"));
+    }
+
+    // Large Data Tests
+    @Test
+    void testLongDescription() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        String longDesc = "This is a very long description. ".repeat(5);
+        page.locator("#name-field input").fill("Long Desc Course");
+        page.locator("#description-field textarea").fill(longDesc);
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("10");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+
+        page.reload();
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").textContent().contains("Long Desc Course"));
+    }
+
+    @Test
+    void testVeryLargeDuration() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Large Duration");
+        page.locator("#teacher-name-field input").fill("Teacher");
+        page.locator("#duration-field input").fill("999999");
+        page.locator("#schedule-field input").fill("Mon");
+        
+        page.click("#add-button");
+        page.waitForSelector("vaadin-dialog-overlay");
+        page.click("#confirm-yes-button");
+        
+        page.waitForTimeout(1000);
+        assertTrue(page.locator("#course-grid").textContent().contains("999999"));
     }
 }

@@ -18,6 +18,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.validator.StringLengthValidator;
 import jakarta.annotation.PostConstruct;
 import vn.edu.hoasen.controller.StudentController;
+import vn.edu.hoasen.model.Course;
 import vn.edu.hoasen.model.Student;
 import vn.edu.hoasen.service.MessageService;
 
@@ -224,11 +225,41 @@ public class StudentView extends VerticalLayout {
         cancelButton.setVisible(false);
         hideForm();
     }
+
+
     
     private void deleteStudent(Student student) {
-        studentController.deleteStudent(student.getId());
-        refreshGrid();
-        Notification.show(messageService.getMessage("login.success"));
+        showConfirmDialog(
+            messageService.getMessage("confirm.delete.title"),
+            messageService.getMessage("confirm.delete.message"),
+            () -> {
+                studentController.deleteStudent(student.getId());
+                refreshGrid();
+                Notification.show(messageService.getMessage("login.success"));
+            }
+        );
+    }
+    
+    private void showConfirmDialog(String title, String message, Runnable onConfirm) {
+        com.vaadin.flow.component.dialog.Dialog dialog = new com.vaadin.flow.component.dialog.Dialog();
+        dialog.setHeaderTitle(title);
+        
+        com.vaadin.flow.component.html.Div content = new com.vaadin.flow.component.html.Div();
+        content.setText(message);
+        dialog.add(content);
+        
+        Button confirmButton = new Button(messageService.getMessage("confirm.yes"), e -> {
+            onConfirm.run();
+            dialog.close();
+        });
+        confirmButton.setId("confirm-yes-button");
+        confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        
+        Button cancelButton = new Button(messageService.getMessage("confirm.no"), e -> dialog.close());
+        cancelButton.setId("confirm-no-button");
+        
+        dialog.getFooter().add(cancelButton, confirmButton);
+        dialog.open();
     }
     
     private void searchStudents() {

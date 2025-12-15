@@ -9,4 +9,5 @@ import java.util.List;
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     List<Teacher> findByNameContainingIgnoreCase(String name);
     List<Teacher> findBySubject(String subject);
+    List<Teacher> findAllByOrderByIdDesc();
 }

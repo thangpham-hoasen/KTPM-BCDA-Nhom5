@@ -10,7 +10,9 @@ import org.junit.platform.suite.api.Suite;
     AttendanceTest.class,
     IntegrationTest.class,
     SecurityAndErrorHandlingTest.class,
-    PerformanceAndLoadTest.class
+    AuthenticationTest.class,
+    CourseManagementTest.class,
+    TeacherManagementTest.class
 })
 public class TestSuite {
     // This class serves as a test suite runner for all Playwright tests

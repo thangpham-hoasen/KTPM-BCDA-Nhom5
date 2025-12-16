@@ -2,8 +2,12 @@ package vn.edu.hoasen.playwright;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AttendanceTest extends BaseTest {
@@ -12,8 +16,35 @@ class AttendanceTest extends BaseTest {
     void loginAndSetup() {
         login();
         
+        // Create a test student first
+        page.click("vaadin-side-nav-item:has-text('Students')");
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.click("#new-button");
+        page.waitForTimeout(500);
+        
+        page.locator("#name-field input").fill("Test Student");
+        page.locator("#birth-date-field input").click();
+        page.locator("#birth-date-field input").fill("1/15/2021");
+        page.keyboard().press("Enter");
+        page.locator("#parent-name-field input").fill("Test Parent");
+        page.locator("#parent-phone-field input").fill("0123456789");
+        page.locator("#class-name-field input").fill("L\u1edbp M\u1ea7m");
+        page.click("#add-button");
+        page.waitForTimeout(1500);
+        
         page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
+    }
+
+    @AfterEach
+    void clearData() {
+        try (Connection conn = DriverManager.getConnection(authProps.getProperty("db.url"));
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("DELETE FROM attendances");
+            stmt.executeUpdate("DELETE FROM students");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test

@@ -1,8 +1,12 @@
 package vn.edu.hoasen.playwright;
 
 import com.microsoft.playwright.options.LoadState;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CourseManagementTest extends BaseTest {
@@ -13,6 +17,16 @@ class CourseManagementTest extends BaseTest {
         page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         page.waitForTimeout(500);
+    }
+
+    @AfterEach
+    void clearData() {
+        try (Connection conn = DriverManager.getConnection(authProps.getProperty("db.url"));
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("DELETE FROM courses");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -75,7 +89,7 @@ class CourseManagementTest extends BaseTest {
 
     @Test
     void testDeleteCourse() {
-        String uniqueName = "DeleteCourse_" + System.currentTimeMillis();
+        String uniqueName = "DelCourse_" + System.currentTimeMillis();
         
         page.click("#new-button");
         page.waitForTimeout(300);
@@ -94,9 +108,10 @@ class CourseManagementTest extends BaseTest {
         String beforeDelete = page.locator("#course-grid").textContent();
         assertTrue(beforeDelete.contains(uniqueName));
         
-        page.locator("#course-grid vaadin-button:has-text('Delete')").last().click();
+        page.locator("#course-grid vaadin-button:has-text('Delete')").first().click();
         page.waitForSelector("vaadin-dialog-overlay");
         page.click("#confirm-yes-button");
+        page.waitForTimeout(2000);
 
         page.reload();
         page.waitForLoadState(LoadState.NETWORKIDLE);

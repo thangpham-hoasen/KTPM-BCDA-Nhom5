@@ -173,10 +173,10 @@ public class TeacherView extends VerticalLayout {
     
     private void setupGrid() {
         grid.removeAllColumns();
-        grid.addColumn(Teacher::getName).setHeader(messageService.getMessage("teacher.name")).setWidth("150px");
-        grid.addColumn(Teacher::getEmail).setHeader(messageService.getMessage("teacher.email")).setWidth("180px");
-        grid.addColumn(Teacher::getPhone).setHeader(messageService.getMessage("teacher.phone")).setWidth("120px");
-        grid.addColumn(Teacher::getSubject).setHeader(messageService.getMessage("teacher.subject")).setWidth("120px");
+        grid.addColumn(Teacher::getName).setHeader(messageService.getMessage("teacher.name")).setWidth("180px");
+        grid.addColumn(Teacher::getEmail).setHeader(messageService.getMessage("teacher.email")).setWidth("150px");
+        grid.addColumn(Teacher::getPhone).setHeader(messageService.getMessage("teacher.phone")).setWidth("100px");
+        grid.addColumn(Teacher::getSubject).setHeader(messageService.getMessage("teacher.subject")).setWidth("100px");
         
         grid.addColumn(teacher -> teacher.getHireDate() != null ? teacher.getHireDate().format(messageService.getCurrentDateTimeFormatter()) : "")
             .setHeader(messageService.getMessage("teacher.hireDate")).setWidth("120px");

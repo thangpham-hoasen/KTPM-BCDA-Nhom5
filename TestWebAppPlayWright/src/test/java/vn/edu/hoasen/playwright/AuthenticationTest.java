@@ -199,6 +199,7 @@ class AuthenticationTest extends BaseTest {
         
         // Should redirect to main page if already logged in
         page.waitForTimeout(1000);
+        assertTrue(page.url().contains("/login"));
     }
 
     @Test

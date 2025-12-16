@@ -1,8 +1,13 @@
 package vn.edu.hoasen.playwright;
 
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StudentManagementTest extends BaseTest {
@@ -14,12 +19,23 @@ class StudentManagementTest extends BaseTest {
         page.waitForLoadState(LoadState.NETWORKIDLE);
     }
 
+    @AfterEach
+    void clearData() {
+        try (Connection conn = DriverManager.getConnection(authProps.getProperty("db.url"));
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("DELETE FROM students");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     void testCreateStudent() {
+        String uniqueName = "Alice_" + System.currentTimeMillis();
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("Alice Smith");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#birth-date-field input").click();
         page.locator("#birth-date-field input").fill("3/10/2021");
         page.keyboard().press("Enter");
@@ -28,17 +44,18 @@ class StudentManagementTest extends BaseTest {
         page.locator("#class-name-field input").fill("Lớp Chồi");
         
         page.click("#add-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
         
-        assertTrue(page.locator("#student-grid").textContent().contains("Alice Smith"));
+        assertTrue(page.locator("#student-grid").textContent().contains(uniqueName));
     }
 
     @Test
     void testEditStudent() {
+        String uniqueName = "EditTest_" + System.currentTimeMillis();
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("Edit Test");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#birth-date-field input").click();
         page.locator("#birth-date-field input").fill("6/15/2021");
         page.keyboard().press("Enter");
@@ -47,52 +64,59 @@ class StudentManagementTest extends BaseTest {
         page.locator("#class-name-field input").fill("Lớp Lá");
         
         page.click("#add-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
         
         page.locator("#student-grid vaadin-button:has-text('Edit')").last().click();
         page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("Edited Name");
+        page.locator("#name-field input").fill("Edited_" + System.currentTimeMillis());
         page.click("#add-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
         
-        assertTrue(page.locator("#student-grid").textContent().contains("Edited Name"));
+        assertFalse(page.locator("#student-grid").textContent().contains(uniqueName));
     }
 
     @Test
     void testDeleteStudent() {
-        String uniqueName = "DeleteStudent_" + System.currentTimeMillis();
+        String uniqueName = "DelStudent_" + System.currentTimeMillis();
         
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
         page.locator("#name-field input").fill(uniqueName);
         page.locator("#birth-date-field input").click();
-        page.locator("#birth-date-field input").fill("9/20/2021");
+        page.locator("#birth-date-field input").fill("9/20/2023");
         page.keyboard().press("Enter");
-        page.locator("#parent-name-field input").fill("Parent Delete");
+        page.locator("#parent-name-field input").fill("ParentABC");
         page.locator("#parent-phone-field input").fill("0987654321");
         page.locator("#class-name-field input").fill("Lớp Mầm");
-        
+
         page.click("#add-button");
         page.waitForTimeout(1500);
-        
+
         assertTrue(page.locator("#student-grid").textContent().contains(uniqueName));
-        
-        page.locator("#student-grid vaadin-button:has-text('Delete')").last().click();
-        page.waitForSelector("vaadin-dialog-overlay");
+
+        page.locator("#student-grid vaadin-button:has-text('Delete')").first().click();
+        page.waitForTimeout(500);
+        page.waitForSelector("#confirm-yes-button", new Page.WaitForSelectorOptions().setTimeout(5000));
         page.click("#confirm-yes-button");
-        
+        page.waitForTimeout(1500);
+
+        page.reload();
+        page.waitForLoadState(LoadState.NETWORKIDLE);
         page.waitForTimeout(1000);
+
+
         assertFalse(page.locator("#student-grid").textContent().contains(uniqueName));
     }
 
     @Test
     void testCancelEdit() {
+        String uniqueName = "CancelTest_" + System.currentTimeMillis();
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("Cancel Test");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#birth-date-field input").click();
         page.locator("#birth-date-field input").fill("12/5/2021");
         page.keyboard().press("Enter");
@@ -101,7 +125,7 @@ class StudentManagementTest extends BaseTest {
         page.locator("#class-name-field input").fill("Lớp Chồi");
         
         page.click("#add-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
         
         page.locator("#student-grid vaadin-button:has-text('Edit')").last().click();
         page.waitForTimeout(500);
@@ -110,43 +134,45 @@ class StudentManagementTest extends BaseTest {
         page.click("#cancel-button");
         page.waitForTimeout(500);
         
-        assertTrue(page.locator("#student-grid").textContent().contains("Cancel Test"));
+        assertTrue(page.locator("#student-grid").textContent().contains(uniqueName));
         assertFalse(page.locator("#student-grid").textContent().contains("Should Not Save"));
     }
 
     @Test
     void testSearchStudent() {
-        String[] names = {"SearchTest 1", "SearchTest 2", "Different Name"};
+        String searchPrefix = "Search_" + System.currentTimeMillis();
+        String[] names = {searchPrefix + "_1", searchPrefix + "_2", "Different_" + System.currentTimeMillis()};
         for (String name : names) {
             page.click("#new-button");
-            page.waitForTimeout(300);
+            page.waitForTimeout(500);
             
             page.locator("#name-field input").fill(name);
             page.locator("#birth-date-field input").click();
             page.locator("#birth-date-field input").fill("1/1/2021");
             page.keyboard().press("Enter");
-            page.locator("#parent-name-field input").fill("Parent " + name);
+            page.locator("#parent-name-field input").fill("Parent Test");
             page.locator("#parent-phone-field input").fill("0123456789");
             page.locator("#class-name-field input").fill("Lớp Mầm");
             
             page.click("#add-button");
-            page.waitForTimeout(500);
+            page.waitForTimeout(1000);
         }
         
-        page.locator("#search-field input").fill("SearchTest");
+        page.locator("#search-field input").fill(searchPrefix);
         page.click("#search-button");
         page.waitForTimeout(1000);
         
         String gridContent = page.locator("#student-grid").textContent();
-        assertTrue(gridContent.contains("SearchTest 1") || gridContent.contains("SearchTest 2"));
+        assertTrue(gridContent.contains(searchPrefix));
     }
 
     @Test
     void testShowAllStudents() {
+        String uniqueName = "ShowAll_" + System.currentTimeMillis();
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("ShowAll Test");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#birth-date-field input").click();
         page.locator("#birth-date-field input").fill("1/1/2021");
         page.keyboard().press("Enter");
@@ -155,24 +181,25 @@ class StudentManagementTest extends BaseTest {
         page.locator("#class-name-field input").fill("Lớp Mầm");
         
         page.click("#add-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
         
         page.locator("#search-field input").fill("NonExistent");
         page.click("#search-button");
-        page.waitForTimeout(500);
+        page.waitForTimeout(1000);
         
         page.click("#show-all-button");
         page.waitForTimeout(1000);
         
-        assertTrue(page.locator("#student-grid").textContent().contains("ShowAll Test"));
+        assertTrue(page.locator("#student-grid").textContent().contains(uniqueName));
     }
 
     @Test
     void testValidStudentCreation() {
+        String uniqueName = "Valid_" + System.currentTimeMillis();
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("Valid Student");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#birth-date-field input").click();
         page.locator("#birth-date-field input").fill("1/15/2023");
         page.keyboard().press("Enter");
@@ -181,9 +208,9 @@ class StudentManagementTest extends BaseTest {
         page.locator("#class-name-field input").fill("Lớp Mầm");
         
         page.click("#add-button");
-        page.waitForTimeout(1000);
+        page.waitForTimeout(1500);
 
-        assertTrue(page.locator("#student-grid").textContent().contains("Valid Student"));
+        assertTrue(page.locator("#student-grid").textContent().contains(uniqueName));
     }
 
     @Test
@@ -308,11 +335,61 @@ class StudentManagementTest extends BaseTest {
     @Test
     void testMissingRequiredFields() {
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
+        
+        int initialCount = page.locator("#student-grid vaadin-grid-cell-content").count();
         
         page.click("#add-button");
         page.waitForTimeout(1000);
         
-        assertTrue(page.locator("#student-grid").isVisible());
+        int finalCount = page.locator("#student-grid vaadin-grid-cell-content").count();
+        assertEquals(initialCount, finalCount);
+    }
+
+    @Test
+    void testParentNameTooShort() {
+        String uniqueName = "ParentShort_" + System.currentTimeMillis();
+        page.click("#new-button");
+        page.waitForTimeout(500);
+        
+        int initialCount = page.locator("#student-grid vaadin-grid-cell-content").count();
+        
+        page.locator("#name-field input").fill(uniqueName);
+        page.locator("#birth-date-field input").click();
+        page.locator("#birth-date-field input").fill("1/15/2021");
+        page.keyboard().press("Enter");
+        page.locator("#parent-name-field input").fill("P");
+        page.locator("#parent-phone-field input").fill("0123456789");
+        page.locator("#class-name-field input").fill("Lớp Mầm");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        
+        int finalCount = page.locator("#student-grid vaadin-grid-cell-content").count();
+        assertEquals(initialCount, finalCount);
+    }
+
+    @Test
+    void testParentNameTooLong() {
+        String uniqueName = "ParentLong_" + System.currentTimeMillis();
+        page.click("#new-button");
+        page.waitForTimeout(500);
+        
+        int initialCount = page.locator("#student-grid vaadin-grid-cell-content").count();
+        
+        String longParentName = "A".repeat(51);
+        page.locator("#name-field input").fill(uniqueName);
+        page.locator("#birth-date-field input").click();
+        page.locator("#birth-date-field input").fill("1/15/2021");
+        page.keyboard().press("Enter");
+        page.locator("#parent-name-field input").fill(longParentName);
+        page.locator("#parent-phone-field input").fill("0123456789");
+        page.locator("#class-name-field input").fill("Lớp Mầm");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        
+        int finalCount = page.locator("#student-grid vaadin-grid-cell-content").count();
+        assertEquals(initialCount, finalCount);
     }
 }

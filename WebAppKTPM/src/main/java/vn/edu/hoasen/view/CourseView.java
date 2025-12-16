@@ -167,8 +167,8 @@ public class CourseView extends VerticalLayout {
     }
     
     private void setupGrid() {
-        grid.addColumn(Course::getName).setHeader(messageService.getMessage("course.name")).setKey("name").setWidth("150px");
-        grid.addColumn(Course::getDescription).setHeader(messageService.getMessage("course.description")).setKey("description").setWidth("200px");
+        grid.addColumn(Course::getName).setHeader(messageService.getMessage("course.name")).setKey("name").setWidth("200px");
+        grid.addColumn(Course::getDescription).setHeader(messageService.getMessage("course.description")).setKey("description").setWidth("150px");
         grid.addColumn(Course::getTeacherName).setHeader(messageService.getMessage("course.teacherName")).setKey("teacherName").setWidth("120px");
         grid.addColumn(Course::getDuration).setHeader(messageService.getMessage("course.duration")).setKey("duration").setWidth("100px");
         grid.addColumn(Course::getSchedule).setHeader(messageService.getMessage("course.schedule")).setKey("schedule").setWidth("120px");

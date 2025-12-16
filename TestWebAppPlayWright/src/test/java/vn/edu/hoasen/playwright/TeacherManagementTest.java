@@ -1,8 +1,15 @@
 package vn.edu.hoasen.playwright;
 
+import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class TeacherManagementTest extends BaseTest {
@@ -14,12 +21,23 @@ class TeacherManagementTest extends BaseTest {
         page.waitForLoadState(LoadState.NETWORKIDLE);
     }
 
+    @AfterEach
+    void clearData() {
+        try (Connection conn = DriverManager.getConnection(authProps.getProperty("db.url"));
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("DELETE FROM teachers");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     void testCreateTeacher() {
+        String uniqueName = "John_" + System.currentTimeMillis();
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
-        page.locator("#name-field input").fill("John Doe");
+        page.locator("#name-field input").fill(uniqueName);
         page.locator("#email-field input").fill("john.doe@example.com");
         page.locator("#phone-field input").fill("0123456789");
         page.locator("#subject-field input").fill("Mathematics");
@@ -29,11 +47,12 @@ class TeacherManagementTest extends BaseTest {
         page.keyboard().press("Enter");
         
         page.click("#add-button");
-        page.waitForSelector("vaadin-dialog-overlay");
+        page.waitForTimeout(500);
+        page.waitForSelector("#confirm-yes-button", new Page.WaitForSelectorOptions().setTimeout(5000));
         page.click("#confirm-yes-button");
         
-        page.waitForTimeout(1000);
-        assertTrue(page.locator("#teacher-grid").textContent().contains("John Doe"));
+        page.waitForTimeout(1500);
+        assertTrue(page.locator("#teacher-grid").textContent().contains(uniqueName));
     }
 
     @Test
@@ -70,10 +89,10 @@ class TeacherManagementTest extends BaseTest {
 
     @Test
     void testDeleteTeacher() {
-        String uniqueName = "DeleteTeacher_" + System.currentTimeMillis();
+        String uniqueName = "DelTeacher_" + System.currentTimeMillis();
         
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
         
         page.locator("#name-field input").fill(uniqueName);
         page.locator("#email-field input").fill("delete@example.com");
@@ -85,18 +104,23 @@ class TeacherManagementTest extends BaseTest {
         page.keyboard().press("Enter");
         
         page.click("#add-button");
-        page.waitForSelector("vaadin-dialog-overlay");
+        page.waitForTimeout(500);
+        page.waitForSelector("#confirm-yes-button", new Page.WaitForSelectorOptions().setTimeout(5000));
         page.click("#confirm-yes-button");
         page.waitForTimeout(1500);
         
         assertTrue(page.locator("#teacher-grid").textContent().contains(uniqueName));
         
-        page.locator("vaadin-button:has-text('Delete')").last().click();
-        page.waitForSelector("vaadin-dialog-overlay");
+        page.locator("vaadin-button:has-text('Delete')").first().click();
+        page.waitForTimeout(500);
+        page.waitForSelector("#confirm-yes-button", new Page.WaitForSelectorOptions().setTimeout(5000));
         page.click("#confirm-yes-button");
-        
+        page.waitForTimeout(1500);
+
         page.reload();
+        page.waitForLoadState(LoadState.NETWORKIDLE);
         page.waitForTimeout(1000);
+
         assertFalse(page.locator("#teacher-grid").textContent().contains(uniqueName));
     }
 
@@ -276,11 +300,58 @@ class TeacherManagementTest extends BaseTest {
     @Test
     void testMissingRequiredFields() {
         page.click("#new-button");
-        page.waitForTimeout(300);
+        page.waitForTimeout(500);
+        
+        int initialCount = page.locator("#teacher-grid vaadin-grid-cell-content").count();
         
         page.click("#add-button");
         page.waitForTimeout(1000);
         
-        assertFalse(page.isVisible("vaadin-dialog-overlay"));
+        int finalCount = page.locator("#teacher-grid vaadin-grid-cell-content").count();
+        assertEquals(initialCount, finalCount);
+    }
+
+    @Test
+    void testPhoneWithLetters() {
+        page.click("#new-button");
+        page.waitForTimeout(300);
+        
+        page.locator("#name-field input").fill("Letter Phone Teacher");
+        page.locator("#email-field input").fill("valid@example.com");
+        page.locator("#phone-field input").fill("012345678a");
+        page.locator("#subject-field input").fill("Math");
+        
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("11/20/2024");
+        page.keyboard().press("Enter");
+        
+        page.click("#add-button");
+        page.waitForTimeout(1000);
+        
+        assertFalse(page.locator("#teacher-grid").textContent().contains("Letter Phone Teacher"));
+    }
+
+    @Test
+    void testValidTeacherCreation() {
+        String uniqueName = "ValidTeacher_" + System.currentTimeMillis();
+        page.click("#new-button");
+        page.waitForTimeout(500);
+        
+        page.locator("#name-field input").fill(uniqueName);
+        page.locator("#email-field input").fill("valid.teacher@example.com");
+        page.locator("#phone-field input").fill("0123456789");
+        page.locator("#subject-field input").fill("Science");
+        
+        page.locator("#hire-date-field input").click();
+        page.locator("#hire-date-field input").fill("12/1/2024");
+        page.keyboard().press("Enter");
+        
+        page.click("#add-button");
+        page.waitForTimeout(500);
+        page.waitForSelector("#confirm-yes-button", new Page.WaitForSelectorOptions().setTimeout(5000));
+        page.click("#confirm-yes-button");
+        page.waitForTimeout(1500);
+
+        assertTrue(page.locator("#teacher-grid").textContent().contains(uniqueName));
     }
 }

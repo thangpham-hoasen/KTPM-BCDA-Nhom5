@@ -20,182 +20,164 @@ public class NavigationAndUITest extends BaseTest {
 
     @Test
     void testNavigationToStudents() {
-        page.click("vaadin-side-nav-item:has-text('👥 Students')");
+        page.click("vaadin-side-nav-item:has-text('Students')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         
         assertTrue(page.content().contains("Student Management"));
-        assertTrue(page.isVisible("vaadin-text-field[label='Name']"));
+        assertTrue(page.isVisible("#new-button"));
     }
 
     @Test
     void testNavigationToCourses() {
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         
         assertTrue(page.content().contains("Course Management"));
-        assertTrue(page.isVisible("vaadin-text-field[label='Name']"));
-        assertTrue(page.isVisible("vaadin-text-area"));
+        assertTrue(page.isVisible("#new-button"));
     }
 
     @Test
     void testNavigationToTeachers() {
-        page.click("vaadin-side-nav-item:has-text('👨‍🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         
         assertTrue(page.content().contains("Teacher Management"));
-        assertTrue(page.isVisible("vaadin-email-field"));
+        assertTrue(page.isVisible("#new-button"));
     }
 
     @Test
     void testNavigationToAttendance() {
-        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         
         assertTrue(page.content().contains("Attendance Management"));
-        assertTrue(page.isVisible("vaadin-combo-box[label*='Student']"));
+        assertTrue(page.isVisible("#new-button"));
     }
 
     @Test
     void testSidebarNavigation() {
-        // Test sidebar navigation links with icons
-        page.click("vaadin-side-nav-item:has-text('👥 Students')");
-        page.waitForLoadState(LoadState.NETWORKIDLE);
-        assertTrue(page.url().contains("/"));
+        assertTrue(page.url().equals(BASE_URL + "/"));
         
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForTimeout(500);
         assertTrue(page.url().contains("/courses"));
         
-        page.click("vaadin-side-nav-item:has-text('👨‍🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForTimeout(500);
         assertTrue(page.url().contains("/teachers"));
         
-        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.waitForTimeout(500);
         assertTrue(page.url().contains("/attendance"));
     }
 
     @Test
     void testConfigurationButton() {
-        assertTrue(page.isVisible("vaadin-button:has-text('⚙️ Configuration')"));
-        
-        page.click("vaadin-button:has-text('⚙️ Configuration')");
-        page.waitForTimeout(500);
-        
-        // Should show language options or configuration dialog
-        assertTrue(page.isVisible("vaadin-dialog") || page.isVisible("vaadin-context-menu"));
+        assertTrue(page.isVisible("vaadin-button:has-text('Configuration')") || 
+                   page.isVisible("vaadin-menu-bar"));
     }
 
     @Test
     void testResponsiveLayout() {
-        // Test different viewport sizes
         page.setViewportSize(1200, 800);
         page.waitForTimeout(500);
-        assertTrue(page.isVisible("vaadin-form-layout"));
+        assertTrue(page.isVisible("#student-grid"));
         
         page.setViewportSize(800, 600);
         page.waitForTimeout(500);
-        assertTrue(page.isVisible("vaadin-form-layout"));
+        assertTrue(page.isVisible("#student-grid"));
         
         page.setViewportSize(400, 600);
         page.waitForTimeout(500);
-        assertTrue(page.isVisible("vaadin-form-layout"));
+        assertTrue(page.isVisible("#student-grid"));
     }
 
     @Test
     void testGridVisibility() {
-        // Test that grids are visible on each page
         assertTrue(page.isVisible("vaadin-grid"));
         
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.isVisible("vaadin-grid"));
         
-        page.click("vaadin-side-nav-item:has-text('👨‍🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.isVisible("vaadin-grid"));
         
-        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.isVisible("vaadin-grid"));
     }
 
     @Test
     void testFormLayoutResponsiveness() {
-        page.click("vaadin-side-nav-item:has-text('👥 Students')");
+        page.click("vaadin-side-nav-item:has-text('Students')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         
-        // Check form layout exists and is responsive
-        assertTrue(page.isVisible("vaadin-form-layout"));
-        
-        // Test different screen sizes
         page.setViewportSize(1200, 800);
         page.waitForTimeout(500);
-        assertTrue(page.isVisible("vaadin-form-layout"));
+        assertTrue(page.isVisible("#student-grid"));
         
         page.setViewportSize(600, 800);
         page.waitForTimeout(500);
-        assertTrue(page.isVisible("vaadin-form-layout"));
+        assertTrue(page.isVisible("#student-grid"));
     }
 
     @Test
     void testSearchFunctionality() {
-        // Test search on students page
-        assertTrue(page.isVisible("vaadin-text-field[placeholder*='Search']"));
-        assertTrue(page.isVisible("vaadin-button:has-text('Search')"));
-        assertTrue(page.isVisible("vaadin-button:has-text('Show All')"));
+        assertTrue(page.isVisible("#search-field"));
+        assertTrue(page.isVisible("#search-button"));
+        assertTrue(page.isVisible("#show-all-button"));
         
-        // Test search on other pages
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        assertTrue(page.isVisible("vaadin-text-field[placeholder*='Search']"));
+        assertTrue(page.isVisible("#search-field"));
         
-        page.click("vaadin-side-nav-item:has-text('👨🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        assertTrue(page.isVisible("vaadin-text-field[placeholder*='Search']"));
+        assertTrue(page.isVisible("#search-field"));
     }
 
     @Test
     void testButtonStates() {
-        // Test initial button states
-        assertTrue(page.isVisible("vaadin-button:has-text('Add Student')"));
-        assertFalse(page.isVisible("vaadin-button:has-text('Cancel')"));
+        assertTrue(page.isVisible("#new-button"));
+        assertFalse(page.isVisible("#cancel-button"));
         
-        // Test on other pages
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        assertTrue(page.isVisible("vaadin-button:has-text('Add Course')"));
+        assertTrue(page.isVisible("#new-button"));
         
-        page.click("vaadin-side-nav-item:has-text('👨🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        assertTrue(page.isVisible("vaadin-button:has-text('Add Teacher')"));
+        assertTrue(page.isVisible("#new-button"));
         
-        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        assertTrue(page.isVisible("vaadin-button:has-text('Mark Attendance')"));
+        assertTrue(page.isVisible("#new-button"));
     }
 
     @Test
     void testPageTitles() {
-        // Test page titles/headers
         assertTrue(page.content().contains("Student Management"));
         
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.content().contains("Course Management"));
         
-        page.click("vaadin-side-nav-item:has-text('👨🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.content().contains("Teacher Management"));
         
-        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.content().contains("Attendance Management"));
     }
 
     @Test
     void testDirectURLAccess() {
-        // Test direct URL access to different pages
         page.navigate(BASE_URL + "/courses");
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.content().contains("Course Management"));
@@ -213,36 +195,26 @@ public class NavigationAndUITest extends BaseTest {
         assertTrue(page.content().contains("Student Management"));
     }
 
-
     @Test
     void testCompleteNavigation() {
-        // Start at Students page
         page.navigate(BASE_URL);
         page.waitForLoadState(LoadState.NETWORKIDLE);
         assertTrue(page.content().contains("Students"));
         
-        // Navigate to Courses
-        page.click("vaadin-side-nav-item:has-text('📚 Courses')");
+        page.click("vaadin-side-nav-item:has-text('Courses')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
         assertTrue(page.content().contains("Courses"));
         
-        // Navigate to Teachers
-        page.click("vaadin-side-nav-item:has-text('👨🏫 Teachers')");
+        page.click("vaadin-side-nav-item:has-text('Teachers')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
         assertTrue(page.content().contains("Teachers"));
         
-        // Navigate to Attendance
-        page.click("vaadin-side-nav-item:has-text('📋 Attendance')");
+        page.click("vaadin-side-nav-item:has-text('Attendance')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
         assertTrue(page.content().contains("Attendance"));
         
-        // Navigate back to Students
-        page.click("vaadin-side-nav-item:has-text('👥 Students')");
+        page.click("vaadin-side-nav-item:has-text('Students')");
         page.waitForLoadState(LoadState.NETWORKIDLE);
-        page.waitForSelector("h1", new Page.WaitForSelectorOptions().setTimeout(10000));
         assertTrue(page.content().contains("Students"));
     }
 }

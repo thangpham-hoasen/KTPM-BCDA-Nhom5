@@ -1,20 +1,22 @@
 package vn.edu.hoasen.service;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import vn.edu.hoasen.model.Teacher;
-import vn.edu.hoasen.repository.TeacherRepository;
-
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
+import vn.edu.hoasen.model.Teacher;
+import vn.edu.hoasen.repository.TeacherRepository;
 
 class TeacherServiceTest {
 
@@ -36,13 +38,13 @@ class TeacherServiceTest {
     @Test
     void getAllTeachers_ShouldReturnAllTeachers() {
         List<Teacher> teachers = Arrays.asList(testTeacher);
-        when(teacherRepository.findAll()).thenReturn(teachers);
+        when(teacherRepository.findAllByOrderByIdDesc()).thenReturn(teachers);
 
         List<Teacher> result = teacherService.getAllTeachers();
 
         assertEquals(1, result.size());
         assertEquals(testTeacher.getName(), result.get(0).getName());
-        verify(teacherRepository).findAll();
+        verify(teacherRepository).findAllByOrderByIdDesc();
     }
 
     @Test

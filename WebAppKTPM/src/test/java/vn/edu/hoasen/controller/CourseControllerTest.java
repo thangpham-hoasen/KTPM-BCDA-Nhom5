@@ -1,18 +1,19 @@
 package vn.edu.hoasen.controller;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
+
 import vn.edu.hoasen.model.Course;
 import vn.edu.hoasen.service.CourseService;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class CourseControllerTest {
 
@@ -33,13 +34,13 @@ class CourseControllerTest {
     @Test
     void getAllCourses_ShouldReturnAllCourses() {
         List<Course> courses = Arrays.asList(testCourse);
-        when(courseService.getAllCourses()).thenReturn(courses);
+        when(courseService.getAllCoursesOrderByCreatedAtDesc()).thenReturn(courses);
 
         List<Course> result = courseController.getAllCourses();
 
         assertEquals(1, result.size());
         assertEquals(testCourse.getName(), result.get(0).getName());
-        verify(courseService).getAllCourses();
+        verify(courseService).getAllCoursesOrderByCreatedAtDesc();
     }
 
     @Test
@@ -57,12 +58,12 @@ class CourseControllerTest {
     @Test
     void searchCourses_WithEmptyTerm_ShouldReturnAllCourses() {
         List<Course> courses = Arrays.asList(testCourse);
-        when(courseService.getAllCourses()).thenReturn(courses);
+        when(courseService.getAllCoursesOrderByCreatedAtDesc()).thenReturn(courses);
 
         List<Course> result = courseController.searchCourses("");
 
         assertEquals(1, result.size());
-        verify(courseService).getAllCourses();
+        verify(courseService).getAllCoursesOrderByCreatedAtDesc();
     }
 
     @Test

@@ -7,18 +7,18 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+
 import jakarta.annotation.PostConstruct;
 import vn.edu.hoasen.controller.StudentController;
-import vn.edu.hoasen.model.Course;
 import vn.edu.hoasen.model.Student;
 import vn.edu.hoasen.service.MessageService;
 
@@ -66,12 +66,31 @@ public class StudentView extends VerticalLayout {
         parentPhoneField.setId("parent-phone-field");
         classNameField = new TextField(messageService.getMessage("student.className"));
         classNameField.setId("class-name-field");
+        classNameField.setReadOnly(true);
         searchField = new TextField(messageService.getMessage("common.search"));
         searchField.setId("search-field");
         
         java.util.Locale currentLocale = messageService.getCurrentLanguage().equals("vi") ? 
             new java.util.Locale("vi", "VN") : java.util.Locale.ENGLISH;
         birthDateField.setLocale(currentLocale);
+
+        // Auto suggest class name from birth date (BR-02)
+        birthDateField.addValueChangeListener(e -> {
+            if (e.getValue() == null) {
+                classNameField.clear();
+                return;
+            }
+            try {
+                Student tmp = new Student();
+                tmp.setBirthDate(e.getValue());
+                // suggestClass() returns message key (class.mam/class.choi/class.la)
+                String classKey = tmp.suggestClass();
+                classNameField.setValue(messageService.getMessage(classKey));
+            } catch (Exception ex) {
+                // Not eligible => clear so user sees it's invalid
+                classNameField.clear();
+            }
+        });
         
         setupValidation();
     }
@@ -92,12 +111,11 @@ public class StudentView extends VerticalLayout {
             .bind(Student::getParentName, Student::setParentName);
             
         binder.forField(parentPhoneField)
-            .withValidator(phone -> phone.matches("^[0-9]{10,11}$"), messageService.getMessage("validation.phone.invalid"))
+            .withValidator(phone -> phone.matches("^0[0-9]{9,10}$"), messageService.getMessage("validation.phone.invalid"))
             .bind(Student::getParentPhone, Student::setParentPhone);
-            
-        binder.forField(classNameField)
-            .asRequired(messageService.getMessage("validation.required"))
-            .bind(Student::getClassName, Student::setClassName);
+
+        // className được gợi ý tự động theo Ngày sinh (BR-02) và được set lại ở backend (StudentService)
+        // => field này chỉ để hiển thị, không bind vào model
     }
     
     private void setupLayout() {
@@ -151,7 +169,9 @@ public class StudentView extends VerticalLayout {
             .setHeader(messageService.getMessage("student.birthDate"));
         grid.addColumn(Student::getParentName).setHeader(messageService.getMessage("student.parentName"));
         grid.addColumn(Student::getParentPhone).setHeader(messageService.getMessage("student.parentPhone"));
-        grid.addColumn(Student::getClassName).setHeader(messageService.getMessage("student.className"));
+        grid.addColumn(student -> student.getClassName() != null ?
+            messageService.getMessage(student.getClassName()) : "")
+            .setHeader(messageService.getMessage("student.className"));
         
         grid.addComponentColumn(student -> {
             Button editButton = new Button(messageService.getMessage("common.edit"), e -> editStudent(student));
@@ -193,6 +213,8 @@ public class StudentView extends VerticalLayout {
             editingStudent = null;
         } catch (ValidationException e) {
             Notification.show(messageService.getMessage("error.validation.failed"));
+        } catch (Exception e) {
+            Notification.show(e.getMessage()); // Show business error (e.g. Class full)
         }
     }
     
@@ -212,6 +234,13 @@ public class StudentView extends VerticalLayout {
     private void editStudent(Student student) {
         editingStudent = student;
         binder.readBean(student);
+
+        // className không bind, set thủ công để hiển thị
+        if (student.getClassName() != null) {
+            classNameField.setValue(messageService.getMessage(student.getClassName()));
+        } else {
+            classNameField.clear();
+        }
         
         formSection.setVisible(true);
         newButton.setVisible(false);

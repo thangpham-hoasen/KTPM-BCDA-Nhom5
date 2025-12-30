@@ -1,19 +1,20 @@
 package vn.edu.hoasen.controller;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import vn.edu.hoasen.model.Student;
-import vn.edu.hoasen.service.StudentService;
-
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
+import vn.edu.hoasen.model.Student;
+import vn.edu.hoasen.service.StudentService;
 
 class StudentControllerTest {
 
@@ -34,13 +35,13 @@ class StudentControllerTest {
     @Test
     void getAllStudents_ShouldReturnAllStudents() {
         List<Student> students = Arrays.asList(testStudent);
-        when(studentService.getAllStudents()).thenReturn(students);
+        when(studentService.getAllStudentsOrderByCreatedAtDesc()).thenReturn(students);
 
         List<Student> result = studentController.getAllStudents();
 
         assertEquals(1, result.size());
         assertEquals(testStudent.getName(), result.get(0).getName());
-        verify(studentService).getAllStudents();
+        verify(studentService).getAllStudentsOrderByCreatedAtDesc();
     }
 
     @Test
@@ -58,12 +59,12 @@ class StudentControllerTest {
     @Test
     void searchStudents_WithEmptyTerm_ShouldReturnAllStudents() {
         List<Student> students = Arrays.asList(testStudent);
-        when(studentService.getAllStudents()).thenReturn(students);
+        when(studentService.getAllStudentsOrderByCreatedAtDesc()).thenReturn(students);
 
         List<Student> result = studentController.searchStudents("");
 
         assertEquals(1, result.size());
-        verify(studentService).getAllStudents();
+        verify(studentService).getAllStudentsOrderByCreatedAtDesc();
     }
 
     @Test

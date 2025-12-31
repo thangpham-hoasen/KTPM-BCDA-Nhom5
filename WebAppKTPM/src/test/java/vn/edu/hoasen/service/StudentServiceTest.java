@@ -31,18 +31,19 @@ class StudentServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         validStudent = new Student("ST001", "John Doe", LocalDate.now().minusMonths(24), 
-                                 Student.Gender.MALE, "Address", "Jane Doe", "123456789", 
+                                 Student.Gender.MALE, "Address", "Jane Doe", "0901234567", 
                                  "jane@email.com", "No allergies");
         validStudent.setId(1L);
         
+        // Dữ liệu tuổi không hợp lệ nhưng thông tin phụ huynh hợp lệ để test đúng BR-01
         invalidStudent = new Student("ST002", "Invalid Student", LocalDate.now().minusMonths(15), 
-                                   Student.Gender.MALE, "Address", "Parent", "123456789", 
+                                   Student.Gender.MALE, "Address", "Parent", "0901234567", 
                                    "parent@email.com", "No allergies");
     }
 
     @Test
     void saveStudent_WithValidStudent_ShouldSave() {
-        when(studentRepository.findByClassName("Lớp Mầm")).thenReturn(Collections.emptyList());
+        when(studentRepository.findByClassName("class.mam")).thenReturn(Collections.emptyList());
         when(studentRepository.save(validStudent)).thenReturn(validStudent);
 
         Student result = studentService.saveStudent(validStudent);
@@ -53,9 +54,8 @@ class StudentServiceTest {
 
     @Test
     void saveStudent_WithInvalidAge_ShouldThrowException() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            studentService.saveStudent(invalidStudent);
-        });
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> studentService.saveStudent(invalidStudent));
+        assertTrue(ex.getMessage().contains("18-60"));
     }
 
     @Test
@@ -91,27 +91,30 @@ class StudentServiceTest {
     }
 
     @Test
-    void saveStudent_WithNullBirthDate_ShouldSave() {
+    void saveStudent_WithNullBirthDate_ShouldThrowException() {
         Student student = new Student();
         student.setName("Test Student");
-        when(studentRepository.save(student)).thenReturn(student);
+        student.setParentName("Parent");
+        student.setParentPhone("0901234567");
 
-        Student result = studentService.saveStudent(student);
-
-        assertNotNull(result);
-        verify(studentRepository).save(student);
+        assertThrows(IllegalArgumentException.class, () -> studentService.saveStudent(student));
+        verify(studentRepository, never()).save(any());
     }
 
     @Test
-    void saveStudent_WithNullClassName_ShouldSave() {
+    void saveStudent_ShouldAutoAssignClassName() {
         Student student = new Student();
         student.setName("Test Student");
+        student.setParentName("Parent");
+        student.setParentPhone("0901234567");
         student.setBirthDate(LocalDate.now().minusMonths(24));
+        student.setClassName(null); // không nhập lớp, backend sẽ tự gán
+
+        when(studentRepository.findByClassName("class.mam")).thenReturn(Collections.emptyList());
         when(studentRepository.save(student)).thenReturn(student);
 
         Student result = studentService.saveStudent(student);
-
-        assertNotNull(result);
+        assertEquals("class.mam", result.getClassName());
         verify(studentRepository).save(student);
     }
 }
